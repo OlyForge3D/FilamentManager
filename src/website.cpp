@@ -134,6 +134,21 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
             }
         }
 
+        else if (doc["type"] == "saveMoonrakerSettings") {
+            String url = doc["payload"]["url"].as<String>();
+            String apiKey = doc["payload"]["apiKey"].as<String>();
+            saveMoonrakerSettings(url, apiKey);
+            ws.textAll("{\"type\":\"saveMoonrakerSettings\",\"payload\":\"success\"}");
+        }
+
+        else if (doc["type"] == "savePrintFarmerSettings") {
+            String url = doc["payload"]["url"].as<String>();
+            String apiKey = doc["payload"]["apiKey"].as<String>();
+            String printerId = doc["payload"]["printerId"].as<String>();
+            savePrintFarmerSettings(url, apiKey, printerId);
+            ws.textAll("{\"type\":\"savePrintFarmerSettings\",\"payload\":\"success\"}");
+        }
+
         else {
             Serial.println("Unbekannter WebSocket-Typ: " + doc["type"].as<String>());
         }
@@ -448,6 +463,20 @@ void setupWebserver(AsyncWebServer &server) {
     server.on("/api/version", HTTP_GET, [](AsyncWebServerRequest *request){
         String fm_version = VERSION;
         String jsonResponse = "{\"version\": \""+ fm_version +"\"}";
+        request->send(200, "application/json", jsonResponse);
+    });
+
+    server.on("/api/backends", HTTP_GET, [](AsyncWebServerRequest *request){
+        JsonDocument doc;
+        doc["moonraker"]["enabled"] = moonrakerEnabled;
+        doc["moonraker"]["url"] = moonrakerUrl;
+        doc["moonraker"]["apiKey"] = moonrakerApiKey;
+        doc["printfarmer"]["enabled"] = printFarmerEnabled;
+        doc["printfarmer"]["url"] = printFarmerUrl;
+        doc["printfarmer"]["apiKey"] = printFarmerApiKey;
+        doc["printfarmer"]["printerId"] = printFarmerPrinterId;
+        String jsonResponse;
+        serializeJson(doc, jsonResponse);
         request->send(200, "application/json", jsonResponse);
     });
 

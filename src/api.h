@@ -50,4 +50,21 @@ bool updateSpoolOcto(int spoolId); // Neue Funktion zum Aktualisieren der Octo-D
 bool createBrandFilament(JsonDocument& payload, String uidString);
 bool createSpoolFromOpenPrintTag(const OpenPrintTagData& optData, String uidString);
 
+// Moonraker/Klipper integration
+extern bool moonrakerEnabled;
+extern String moonrakerUrl;
+extern String moonrakerApiKey;
+bool updateSpoolMoonraker(int spoolId);
+bool saveMoonrakerSettings(const String& url, const String& apiKey);
+String loadMoonrakerUrl();
+
+// PrintFarmer integration
+extern bool printFarmerEnabled;
+extern String printFarmerUrl;
+extern String printFarmerApiKey;
+extern String printFarmerPrinterId;
+bool updateSpoolPrintFarmer(int spoolId);
+bool savePrintFarmerSettings(const String& url, const String& apiKey, const String& printerId);
+String loadPrintFarmerUrl();
+
 #endif

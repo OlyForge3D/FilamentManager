@@ -43,6 +43,12 @@ void setup() {
   // Spoolman API
   initSpoolman();
 
+  // Moonraker/Klipper
+  loadMoonrakerUrl();
+
+  // PrintFarmer
+  loadPrintFarmerUrl();
+
   // Bambu MQTT
   setupMqtt();
 
@@ -238,6 +244,14 @@ void loop() {
         if (octoEnabled) 
         {
           updateOctoSpoolId = activeSpoolId.toInt();
+        }
+        // Notify Moonraker of active spool change
+        if (moonrakerEnabled) {
+          updateSpoolMoonraker(activeSpoolId.toInt());
+        }
+        // Notify PrintFarmer of active spool change
+        if (printFarmerEnabled) {
+          updateSpoolPrintFarmer(activeSpoolId.toInt());
         }
       }
       else

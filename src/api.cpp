@@ -27,6 +27,17 @@ bool spoolmanConnected = false;
 bool spoolmanExtraFieldsChecked = false;
 TaskHandle_t* apiTask;
 
+// Moonraker/Klipper integration
+bool moonrakerEnabled = false;
+String moonrakerUrl = "";
+String moonrakerApiKey = "";
+
+// PrintFarmer integration
+bool printFarmerEnabled = false;
+String printFarmerUrl = "";
+String printFarmerApiKey = "";
+String printFarmerPrinterId = "";
+
 struct SendToApiParams {
     SpoolmanApiRequestType requestType;
     String httpType;
@@ -1429,4 +1440,148 @@ bool initSpoolman() {
 
     oledShowTopRow();
     return true;
+}
+
+// ============================================================================
+// Moonraker/Klipper Integration
+// ============================================================================
+
+bool updateSpoolMoonraker(int spoolId) {
+    if (!moonrakerEnabled || moonrakerUrl.length() == 0) {
+        Serial.println("Moonraker not configured, skipping");
+        return false;
+    }
+
+    Serial.printf("Moonraker: Setting active spool to %d\n", spoolId);
+
+    HTTPClient http;
+    String url = moonrakerUrl + "/server/spoolman/spool_id";
+
+    http.begin(url);
+    http.addHeader("Content-Type", "application/json");
+    if (moonrakerApiKey.length() > 0) {
+        http.addHeader("X-Api-Key", moonrakerApiKey);
+    }
+
+    // Moonraker requires spool_id key to be OMITTED (send {}) to clear, not null
+    String payload;
+    if (spoolId > 0) {
+        payload = "{\"spool_id\":" + String(spoolId) + "}";
+    } else {
+        payload = "{}";
+    }
+
+    Serial.printf("Moonraker POST %s: %s\n", url.c_str(), payload.c_str());
+    int httpCode = http.POST(payload);
+
+    if (httpCode == 200) {
+        Serial.println("Moonraker: Active spool updated successfully");
+        http.end();
+        return true;
+    } else {
+        Serial.printf("Moonraker: Failed to update spool, HTTP %d\n", httpCode);
+        String response = http.getString();
+        Serial.println("Response: " + response);
+        http.end();
+        return false;
+    }
+}
+
+bool saveMoonrakerSettings(const String& url, const String& apiKey) {
+    Preferences preferences;
+    preferences.begin(NVS_NAMESPACE_API, false);
+    preferences.putBool(NVS_KEY_MOONRAKER_ENABLED, url.length() > 0);
+    preferences.putString(NVS_KEY_MOONRAKER_URL, url);
+    preferences.putString(NVS_KEY_MOONRAKER_API_KEY, apiKey);
+    preferences.end();
+
+    moonrakerEnabled = url.length() > 0;
+    moonrakerUrl = url;
+    moonrakerApiKey = apiKey;
+
+    Serial.printf("Moonraker settings saved: %s (enabled=%d)\n", url.c_str(), moonrakerEnabled);
+    return true;
+}
+
+String loadMoonrakerUrl() {
+    Preferences preferences;
+    preferences.begin(NVS_NAMESPACE_API, true);
+    moonrakerEnabled = preferences.getBool(NVS_KEY_MOONRAKER_ENABLED, false);
+    moonrakerUrl = preferences.getString(NVS_KEY_MOONRAKER_URL, "");
+    moonrakerApiKey = preferences.getString(NVS_KEY_MOONRAKER_API_KEY, "");
+    preferences.end();
+
+    Serial.printf("Moonraker loaded: %s (enabled=%d)\n", moonrakerUrl.c_str(), moonrakerEnabled);
+    return moonrakerUrl;
+}
+
+// ============================================================================
+// PrintFarmer Integration
+// ============================================================================
+
+bool updateSpoolPrintFarmer(int spoolId) {
+    if (!printFarmerEnabled || printFarmerUrl.length() == 0 || printFarmerPrinterId.length() == 0) {
+        Serial.println("PrintFarmer not configured, skipping");
+        return false;
+    }
+
+    Serial.printf("PrintFarmer: Setting active spool %d on printer %s\n", spoolId, printFarmerPrinterId.c_str());
+
+    HTTPClient http;
+    String url = printFarmerUrl + "/api/printers/" + printFarmerPrinterId + "/active-spool";
+
+    http.begin(url);
+    http.addHeader("Content-Type", "application/json");
+    if (printFarmerApiKey.length() > 0) {
+        http.addHeader("Authorization", "Bearer " + printFarmerApiKey);
+    }
+
+    String payload = "{\"spoolId\":" + String(spoolId) + "}";
+    Serial.printf("PrintFarmer POST %s: %s\n", url.c_str(), payload.c_str());
+    int httpCode = http.POST(payload);
+
+    if (httpCode == 200 || httpCode == 204) {
+        Serial.println("PrintFarmer: Active spool updated successfully");
+        http.end();
+        return true;
+    } else {
+        Serial.printf("PrintFarmer: Failed, HTTP %d\n", httpCode);
+        String response = http.getString();
+        Serial.println("Response: " + response);
+        http.end();
+        return false;
+    }
+}
+
+bool savePrintFarmerSettings(const String& url, const String& apiKey, const String& printerId) {
+    Preferences preferences;
+    preferences.begin(NVS_NAMESPACE_API, false);
+    preferences.putBool(NVS_KEY_PRINTFARMER_ENABLED, url.length() > 0);
+    preferences.putString(NVS_KEY_PRINTFARMER_URL, url);
+    preferences.putString(NVS_KEY_PRINTFARMER_API_KEY, apiKey);
+    preferences.putString(NVS_KEY_PRINTFARMER_PRINTER_ID, printerId);
+    preferences.end();
+
+    printFarmerEnabled = url.length() > 0;
+    printFarmerUrl = url;
+    printFarmerApiKey = apiKey;
+    printFarmerPrinterId = printerId;
+
+    Serial.printf("PrintFarmer settings saved: %s printer=%s (enabled=%d)\n",
+                  url.c_str(), printerId.c_str(), printFarmerEnabled);
+    return true;
+}
+
+String loadPrintFarmerUrl() {
+    Preferences preferences;
+    preferences.begin(NVS_NAMESPACE_API, true);
+    printFarmerEnabled = preferences.getBool(NVS_KEY_PRINTFARMER_ENABLED, false);
+    printFarmerUrl = preferences.getString(NVS_KEY_PRINTFARMER_URL, "");
+    printFarmerApiKey = preferences.getString(NVS_KEY_PRINTFARMER_API_KEY, "");
+    printFarmerPrinterId = preferences.getString(NVS_KEY_PRINTFARMER_PRINTER_ID, "");
+    preferences.end();
+
+    Serial.printf("PrintFarmer loaded: %s printer=%s (enabled=%d)\n",
+                  printFarmerUrl.c_str(), printFarmerPrinterId.c_str(), printFarmerEnabled);
+    return printFarmerUrl;
 }
