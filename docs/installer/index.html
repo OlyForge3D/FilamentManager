@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FilamentManager — Web Installer</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>FilamentManager</h1>
+            <p class="subtitle">Web Installer</p>
+        </header>
+
+        <main>
+            <section class="install-card">
+                <h2>Install Firmware</h2>
+                <p id="version-info">Fetching latest release…</p>
+                <div class="install-button-wrapper">
+                    <esp-web-install-button id="install-button">
+                        <span slot="unsupported">
+                            Your browser does not support Web Serial.<br>
+                            Please open this page in <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong>.
+                        </span>
+                        <span slot="not-allowed">
+                            Web Serial is not allowed in this context.<br>
+                            Make sure you're accessing this page over <strong>HTTPS</strong>.
+                        </span>
+                    </esp-web-install-button>
+                </div>
+                <p class="hint">Connect your ESP32 via USB, then click the button above.</p>
+            </section>
+
+            <section class="info-card">
+                <h3>Requirements</h3>
+                <ul>
+                    <li>Google Chrome or Microsoft Edge (desktop)</li>
+                    <li>USB cable connected to the ESP32</li>
+                    <li>Web Serial is <strong>not</strong> supported on iOS, Safari, or Firefox</li>
+                </ul>
+            </section>
+        </main>
+
+        <footer>
+            <p>
+                <a href="https://github.com/OlyForge3D/FilamentManager">GitHub</a> ·
+                <a href="https://github.com/OlyForge3D/FilamentManager/releases">Releases</a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        const REPO = "OlyForge3D/FilamentManager";
+
+        async function loadLatestRelease() {
+            const versionInfo = document.getElementById("version-info");
+            const installButton = document.getElementById("install-button");
+
+            try {
+                const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
+                if (!res.ok) throw new Error(`GitHub API returned ${res.status}`);
+                const release = await res.json();
+
+                const asset = release.assets.find(a => a.name.startsWith("filaman_full_"));
+                if (!asset) throw new Error("No full binary found in latest release");
+
+                versionInfo.textContent = `Latest version: ${release.tag_name}`;
+
+                const manifest = {
+                    name: "FilamentManager",
+                    version: release.tag_name,
+                    new_install_prompt_erase: true,
+                    builds: [{
+                        chipFamily: "ESP32",
+                        parts: [{
+                            path: asset.browser_download_url,
+                            offset: 0
+                        }]
+                    }]
+                };
+
+                const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
+                installButton.manifest = URL.createObjectURL(blob);
+            } catch (err) {
+                console.error("Failed to load release:", err);
+                versionInfo.textContent = "Could not fetch latest release. Check the releases page.";
+                versionInfo.classList.add("error");
+            }
+        }
+
+        loadLatestRelease();
+    </script>
+</body>
+</html>
