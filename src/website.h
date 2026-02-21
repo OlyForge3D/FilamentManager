@@ -17,7 +17,7 @@ extern String spoolmanUrl;
 extern AsyncWebServer server;
 extern AsyncWebSocket ws;
 
-// Server-Initialisierung und Handler
+// Server initialization and handlers
 void initWebServer();
 void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
 void setupWebserver(AsyncWebServer &server);

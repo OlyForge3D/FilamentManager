@@ -135,23 +135,23 @@ def update_changelog():
                 f.write(updated_content)
             print(f"Added new version {version} to changelog")
         else:
-            # Version existiert bereits, aktualisiere die bestehenden Einträge
+            # Version already exists, update existing entries
             version_pattern = f"## \\[{version}\\] - \\d{{4}}-\\d{{2}}-\\d{{2}}"
             next_version_pattern = "## \\[.*?\\] - \\d{4}-\\d{2}-\\d{2}"
             
-            # Finde den Start der aktuellen Version
+            # Find the start of the current version
             version_match = re.search(version_pattern, content)
             if version_match:
                 version_start = version_match.start()
-                # Suche nach der nächsten Version
+                # Search for the next version
                 next_version_match = re.search(next_version_pattern, content[version_start + 1:])
                 
                 if next_version_match:
-                    # Ersetze den Inhalt zwischen aktueller und nächster Version
+                    # Replace content between current and next version
                     next_version_pos = version_start + 1 + next_version_match.start()
                     updated_content = content[:version_start] + changelog_entry + content[next_version_pos:]
                 else:
-                    # Wenn keine nächste Version existiert, ersetze bis zum Ende
+                    # If no next version exists, replace until the end
                     updated_content = content[:version_start] + changelog_entry + "\n"
                 
                 with open(changelog_path, 'w') as f:

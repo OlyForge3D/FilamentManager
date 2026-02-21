@@ -16,6 +16,7 @@ typedef enum{
 void startNfc();
 void scanRfidTask(void * parameter);
 void startWriteJsonToTag(const bool isSpoolTag, const char* payload);
+void startWriteOpenPrintTagToTag(const char* jsonConfig);
 bool quickSpoolIdCheck(String uidString);
 bool readCompleteJsonForFastPath(); // Read complete JSON data for fast-path web interface display
 

@@ -11,6 +11,15 @@
 #define NVS_KEY_OCTOPRINT_URL               "octoUrl"
 #define NVS_KEY_OCTOPRINT_TOKEN             "octoToken"
 
+#define NVS_KEY_MOONRAKER_ENABLED           "moonEnabled"
+#define NVS_KEY_MOONRAKER_URL               "moonUrl"
+#define NVS_KEY_MOONRAKER_API_KEY           "moonApiKey"
+
+#define NVS_KEY_PRINTFARMER_ENABLED         "pfEnabled"
+#define NVS_KEY_PRINTFARMER_URL             "pfUrl"
+#define NVS_KEY_PRINTFARMER_API_KEY         "pfApiKey"
+#define NVS_KEY_PRINTFARMER_PRINTER_ID      "pfPrinterId"
+
 #define NVS_NAMESPACE_BAMBU                 "bambu"
 #define NVS_KEY_BAMBU_IP                    "bambuIp"
 #define NVS_KEY_BAMBU_ACCESSCODE            "bambuCode"

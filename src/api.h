@@ -6,6 +6,7 @@
 #include "website.h"
 #include "display.h"
 #include <ArduinoJson.h>
+#include "openprinttag.h"
 typedef enum {
     API_INIT,
     API_IDLE,
@@ -37,15 +38,35 @@ extern uint16_t updateOctoSpoolId;
 
 bool checkSpoolmanInstance();
 bool saveSpoolmanUrl(const String& url, bool octoOn, const String& octoWh, const String& octoTk);
-String loadSpoolmanUrl(); // Neue Funktion zum Laden der URL
-bool checkSpoolmanExtraFields(); // Neue Funktion zum Überprüfen der Extrafelder
-JsonDocument fetchSingleSpoolInfo(int spoolId); // API-Funktion für die Webseite
-bool updateSpoolTagId(String uidString, const char* payload); // Neue Funktion zum Aktualisieren eines Spools
-uint8_t updateSpoolWeight(String spoolId, uint16_t weight); // Neue Funktion zum Aktualisieren des Gewichts
+String loadSpoolmanUrl(); // Function to load the URL
+bool checkSpoolmanExtraFields(); // Function for checking extra fields
+JsonDocument fetchSingleSpoolInfo(int spoolId); // API function for the web page
+bool updateSpoolTagId(String uidString, const char* payload); // Function to update a spool
+uint8_t updateSpoolWeight(String spoolId, uint16_t weight); // Function to update weight
 uint8_t updateSpoolLocation(String spoolId, String location);
-bool initSpoolman(); // Neue Funktion zum Initialisieren von Spoolman
-bool updateSpoolBambuData(String payload); // Neue Funktion zum Aktualisieren der Bambu-Daten
-bool updateSpoolOcto(int spoolId); // Neue Funktion zum Aktualisieren der Octo-Daten
+bool initSpoolman(); // Function to initialize Spoolman
+bool updateSpoolBambuData(String payload); // Function to update Bambu data
+bool updateSpoolOcto(int spoolId); // Function to update Octo data
 bool createBrandFilament(JsonDocument& payload, String uidString);
+bool createSpoolFromOpenPrintTag(const OpenPrintTagData& optData, String uidString);
+
+// Moonraker/Klipper integration
+extern bool moonrakerEnabled;
+extern String moonrakerUrl;
+extern String moonrakerApiKey;
+bool updateSpoolMoonraker(int spoolId);
+bool saveMoonrakerSettings(const String& url, const String& apiKey);
+String loadMoonrakerUrl();
+
+// PrintFarmer integration
+extern bool printFarmerEnabled;
+extern String printFarmerUrl;
+extern String printFarmerApiKey;
+extern String printFarmerPrinterId;
+bool updateSpoolPrintFarmer(int spoolId);
+bool savePrintFarmerSettings(const String& url, const String& apiKey, const String& printerId);
+String loadPrintFarmerUrl();
+bool sendPrintFarmerHeartbeat();
+bool sendPrintFarmerScanEvent(int spoolId, const String& tagFormat, const String& materialType, const String& brandName);
 
 #endif

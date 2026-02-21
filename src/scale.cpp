@@ -123,13 +123,13 @@ int16_t getFilteredDisplayWeight() {
   return lastDisplayedWeight;
 }
 
-// ##### Funktionen für Waage #####
+// ##### Scale functions #####
 uint8_t setAutoTare(bool autoTareValue) {
   Serial.print("Set AutoTare to ");
   Serial.println(autoTareValue);
   autoTare = autoTareValue;
 
-  // Speichern mit NVS
+  // Save with NVS
   Preferences preferences;
   preferences.begin(NVS_NAMESPACE_SCALE, false); // false = readwrite
   preferences.putBool(NVS_KEY_AUTOTARE, autoTare);
@@ -163,7 +163,7 @@ void scale_loop(void * parameter) {
     if (currentTime - lastMeasurementTime >= MEASUREMENT_INTERVAL_MS) {
       if (scale.is_ready()) 
       {
-        // Waage manuell Taren
+        // Manually tare scale
         if (scaleTareRequest == true || (autoTare && scale_tare_counter >= 20)) 
         {
           Serial.println("Re-Tare scale");
@@ -189,8 +189,8 @@ void scale_loop(void * parameter) {
           weight = stabilizedWeight;
         }
         
-        // Prüfen ob die Waage korrekt genullt ist
-        // Abweichung von 2g ignorieren
+        // Check if scale is correctly zeroed
+        // Deviation of 2g is ignored
         if (autoTare && (rawWeight > 2 && rawWeight < 7) || rawWeight < -2)
         {
           scale_tare_counter++;
@@ -215,10 +215,10 @@ void scale_loop(void * parameter) {
 }
 
 void start_scale(bool touchSensorConnected) {
-  Serial.println("Prüfe Calibration Value");
+  Serial.println("Checking calibration value");
   float calibrationValue;
 
-  // NVS lesen
+  // Read NVS
   Preferences preferences;
   preferences.begin(NVS_NAMESPACE_SCALE, true); // true = readonly
   if(preferences.isKey(NVS_KEY_CALIBRATION)){
@@ -230,8 +230,8 @@ void start_scale(bool touchSensorConnected) {
   }
   
   // auto Tare
-  // Wenn Touch Sensor verbunden, dann autoTare auf false setzen
-  // Danach prüfen was in NVS gespeichert ist
+  // If touch sensor connected, set autoTare to false
+  // Then check what is stored in NVS
   autoTare = (touchSensorConnected) ? false : true;
   autoTare = preferences.getBool(NVS_KEY_AUTOTARE, autoTare);
 
@@ -259,10 +259,10 @@ void start_scale(bool touchSensorConnected) {
   // Initialize weight stabilization filter
   resetWeightFilter();
 
-  // Display Gewicht
+  // Display weight
   oledShowWeight(0);
 
-  Serial.println("starte Scale Task");
+  Serial.println("Starting Scale Task");
   BaseType_t result = xTaskCreatePinnedToCore(
     scale_loop, /* Function to implement the task */
     "ScaleLoop", /* Name of the task */
@@ -273,9 +273,9 @@ void start_scale(bool touchSensorConnected) {
     scaleTaskCore); /* Core where the task should run */
 
   if (result != pdPASS) {
-      Serial.println("Fehler beim Erstellen des ScaleLoop-Tasks");
+      Serial.println("Error creating ScaleLoop task");
   } else {
-      Serial.println("ScaleLoop-Task erfolgreich erstellt");
+      Serial.println("ScaleLoop task created successfully");
   }
 }
 
@@ -326,13 +326,13 @@ uint8_t calibrate_scale() {
       Serial.print("New calibration value has been set to: ");
       Serial.println(newCalibrationValue);
 
-      // Speichern mit NVS
+      // Save with NVS
       Preferences preferences;
       preferences.begin(NVS_NAMESPACE_SCALE, false); // false = readwrite
       preferences.putFloat(NVS_KEY_CALIBRATION, newCalibrationValue);
       preferences.end();
 
-      // Verifizieren
+      // Verify
       preferences.begin(NVS_NAMESPACE_SCALE, true);
       float verifyValue = preferences.getFloat(NVS_KEY_CALIBRATION, 0);
       preferences.end();

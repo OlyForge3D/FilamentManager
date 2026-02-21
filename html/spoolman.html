@@ -30,7 +30,7 @@
         <nav style="display: flex; gap: 1rem;">
             <a href="/">Start</a>
             <a href="/waage">Scale</a>
-            <a href="/spoolman">Spoolman/Bambu</a>
+            <a href="/spoolman">Settings</a>
             <a href="/about">About</a>
             <a href="/upgrade">Upgrade</a>
         </nav>
@@ -147,6 +147,7 @@
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Set URL/IP to your Spoolman instance</h5>
+                <p style="font-size: 0.85em; color: #888;">Tip: If Spoolman is behind Moonraker, use <code>http://moonraker-ip:7125/server/spoolman</code> as the URL.</p>
                 <input type="text" id="spoolmanUrl" onkeydown="if(event.keyCode == 13) document.getElementById('btnSaveSpoolmanUrl').click()" placeholder="http://ip-or-url-of-your-spoolman-instance:port">
                 <h5 class="card-title">If you want to enable sending the spool to the Spoolman Octoprint plugin:</h5>
                 <p>
@@ -197,6 +198,93 @@
                 </div>
             </div>
         </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Moonraker / Klipper Integration</h5>
+                <p>Set active spool in Moonraker when an NFC tag is scanned.</p>
+                <div class="input-group">
+                    <label for="moonrakerUrl">Moonraker URL:</label>
+                    <input type="text" id="moonrakerUrl" placeholder="http://ip-of-klipper:7125">
+                </div>
+                <div class="input-group">
+                    <label for="moonrakerApiKey">API Key (optional):</label>
+                    <input type="text" id="moonrakerApiKey" placeholder="Leave empty if not required">
+                </div>
+                <button onclick="saveMoonrakerSettings()">Save Moonraker Settings</button>
+                <p id="moonrakerStatusMessage"></p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">PrintFarmer Integration</h5>
+                <p>Set active spool in PrintFarmer when an NFC tag is scanned.</p>
+                <div class="input-group">
+                    <label for="printFarmerUrl">PrintFarmer URL:</label>
+                    <input type="text" id="printFarmerUrl" placeholder="http://ip-of-printfarmer:5245">
+                </div>
+                <div class="input-group">
+                    <label for="printFarmerApiKey">API Key / Token:</label>
+                    <input type="text" id="printFarmerApiKey" placeholder="Bearer token">
+                </div>
+                <div class="input-group">
+                    <label for="printFarmerPrinterId">Printer ID:</label>
+                    <input type="text" id="printFarmerPrinterId" placeholder="UUID of the printer in PrintFarmer">
+                </div>
+                <button onclick="savePrintFarmerSettings()">Save PrintFarmer Settings</button>
+                <p id="printFarmerStatusMessage"></p>
+            </div>
+        </div>
     </div>
+
+    <script>
+        // Load backend settings on page load
+        fetch('/api/backends')
+            .then(r => r.json())
+            .then(data => {
+                if (data.moonraker) {
+                    document.getElementById('moonrakerUrl').value = data.moonraker.url || '';
+                    document.getElementById('moonrakerApiKey').value = data.moonraker.apiKey || '';
+                }
+                if (data.printfarmer) {
+                    document.getElementById('printFarmerUrl').value = data.printfarmer.url || '';
+                    document.getElementById('printFarmerApiKey').value = data.printfarmer.apiKey || '';
+                    document.getElementById('printFarmerPrinterId').value = data.printfarmer.printerId || '';
+                }
+            })
+            .catch(e => console.error('Error loading backend settings:', e));
+
+        function saveMoonrakerSettings() {
+            const ws = new WebSocket('ws://' + window.location.host + '/ws');
+            ws.onopen = function() {
+                ws.send(JSON.stringify({
+                    type: 'saveMoonrakerSettings',
+                    payload: {
+                        url: document.getElementById('moonrakerUrl').value,
+                        apiKey: document.getElementById('moonrakerApiKey').value
+                    }
+                }));
+                document.getElementById('moonrakerStatusMessage').innerText = 'Moonraker settings saved!';
+                setTimeout(() => ws.close(), 1000);
+            };
+        }
+
+        function savePrintFarmerSettings() {
+            const ws = new WebSocket('ws://' + window.location.host + '/ws');
+            ws.onopen = function() {
+                ws.send(JSON.stringify({
+                    type: 'savePrintFarmerSettings',
+                    payload: {
+                        url: document.getElementById('printFarmerUrl').value,
+                        apiKey: document.getElementById('printFarmerApiKey').value,
+                        printerId: document.getElementById('printFarmerPrinterId').value
+                    }
+                }));
+                document.getElementById('printFarmerStatusMessage').innerText = 'PrintFarmer settings saved!';
+                setTimeout(() => ws.close(), 1000);
+            };
+        }
+    </script>
 </body>
 </html>

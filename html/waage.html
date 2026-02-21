@@ -60,7 +60,7 @@
             </div>
         </div>
 
-        <!-- Neue Kalibrierungskarte -->
+        <!-- New calibration card -->
         <div id="calibrationCard" class="card mt-3" style="display: none;">
             <div class="card-body">
                 <h5 class="card-title">Calibration done</h5>
@@ -121,7 +121,7 @@
         }
 
         document.getElementById('calibrateBtn').addEventListener('click', () => {
-            // Kalibrierungskarte anzeigen
+            // Show calibration card
             document.getElementById('calibrationCard').style.display = 'block';
         });
 
@@ -130,7 +130,7 @@
                 type: 'scale',
                 payload: 'calibrate'
             }));
-            // Optional: Kalibrierungskarte nach dem Start ausblenden
+            // Optional: Hide calibration card after start
             document.getElementById('calibrationCard').style.display = 'none';
         });
 
@@ -150,7 +150,7 @@
             }));
         }
 
-        // WebSocket-Verbindung beim Laden der Seite initiieren
+        // Initiate WebSocket connection on page load
         connectWebSocket();
     </script>
 </body>

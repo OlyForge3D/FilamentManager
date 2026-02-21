@@ -24,12 +24,12 @@ struct BambuCredentials {
     int autosend_time;
 };
 
-#define MAX_AMS 17  // 16 normale AMS + 1 externe Spule
-extern String amsJsonData;  // Für die vorbereiteten JSON-Daten
+#define MAX_AMS 17  // 16 normal AMS + 1 external spool
+extern String amsJsonData;  // For prepared JSON data
 
 struct AMSData {
     uint8_t ams_id;
-    TrayData trays[4]; // Annahme: Maximal 4 Trays pro AMS
+    TrayData trays[4]; // Assumption: Maximum 4 trays per AMS
 };
 
 extern bool bambu_connected;

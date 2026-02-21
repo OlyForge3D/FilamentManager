@@ -6,14 +6,14 @@
 #include "nfc.h"
 
 
-// Globale Variablen für Config Backups hinzufügen
+// Add global variables for config backups
 String bambuCredentialsBackup;
 String spoolmanUrlBackup;
 
-// Globale Variable für den Update-Typ
+// Global variable for update type
 static int currentUpdateCommand = 0;
 
-// Globale Update-Variablen
+// Global update variables
 static size_t updateTotalSize = 0;
 static size_t updateWritten = 0;
 static bool isSpiffsUpdate = false;
@@ -104,7 +104,7 @@ void espRestart() {
 void sendUpdateProgress(int progress, const char* status = nullptr, const char* message = nullptr) {
     static int lastSentProgress = -1;
     
-    // Verhindere zu häufige Updates
+    // Prevent too frequent updates
     if (progress == lastSentProgress && !status && !message) {
         return;
     }
@@ -119,16 +119,16 @@ void sendUpdateProgress(int progress, const char* status = nullptr, const char* 
     progressMsg += "}";
     
     if (progress >= 100) {
-        // Sende die Nachricht nur einmal für den Abschluss
+        // Send the message only once for completion
         ws.textAll("{\"type\":\"updateProgress\",\"progress\":100,\"status\":\"success\",\"message\":\"Update successful! Restarting device...\"}");
         delay(50);
     }
 
-    // Sende die Nachricht mehrmals mit Verzögerung für wichtige Updates
+    // Send the message multiple times with delay for important updates
     if (status || abs(progress - lastSentProgress) >= 10 || progress == 100) {
         for (int i = 0; i < 2; i++) {
             ws.textAll(progressMsg);
-            delay(100);  // Längerer Delay zwischen Nachrichten
+            delay(100);  // Longer delay between messages
         }
     } else {
         ws.textAll(progressMsg);
@@ -180,7 +180,7 @@ void handleUpdate(AsyncWebServer &server) {
             isSpiffsUpdate = (filename.indexOf("website") > -1);
             
             if (isSpiffsUpdate) {
-                // Backup vor dem Update
+                // Backup before update
                 sendUpdateProgress(0, "backup", "Backing up configurations...");
                 vTaskDelay(200 / portTICK_PERIOD_MS);
                 backupJsonConfigs();
@@ -212,12 +212,12 @@ void handleUpdate(AsyncWebServer &server) {
             updateWritten += len;
             int currentProgress;
             
-            // Berechne den Fortschritt basierend auf dem Update-Typ
+            // Calculate progress based on update type
             if (isSpiffsUpdate) {
-                // SPIFFS: 5-75% für Upload
+                // SPIFFS: 5-75% for upload
                 currentProgress = 6 + (updateWritten * 100) / updateTotalSize;
             } else {
-                // Firmware: 0-100% für Upload
+                // Firmware: 0-100% for upload
                 currentProgress = 1 + (updateWritten * 100) / updateTotalSize;
             }
             
@@ -247,7 +247,7 @@ void handleUpdate(AsyncWebServer &server) {
             return;
         }
 
-        // Erste 100% Nachricht
+        // First 100% message
         ws.textAll("{\"type\":\"updateProgress\",\"progress\":100,\"status\":\"success\",\"message\":\"Update successful! Restarting device...\"}");
         vTaskDelay(2000 / portTICK_PERIOD_MS);
         
@@ -256,7 +256,7 @@ void handleUpdate(AsyncWebServer &server) {
         response->addHeader("Connection", "close");
         request->send(response);
         
-        // Zweite 100% Nachricht zur Sicherheit
+        // Second 100% message for safety
         ws.textAll("{\"type\":\"updateProgress\",\"progress\":100,\"status\":\"success\",\"message\":\"Update successful! Restarting device...\"}");
         
         espRestart();
