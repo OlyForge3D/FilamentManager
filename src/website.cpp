@@ -5,6 +5,7 @@
 #include <ESPAsyncWebServer.h>
 #include "bambu.h"
 #include "nfc.h"
+#include "openprinttag.h"
 #include "scale.h"
 #include "esp_task_wdt.h"
 #include <Update.h>
@@ -75,6 +76,14 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
                 serializeJson(doc["payload"], payloadString);
 
                 startWriteJsonToTag((doc["tagType"] == "spool") ? true : false, payloadString.c_str());
+            }
+        }
+
+        else if (doc["type"] == "writeOpenPrintTag") {
+            if (doc["payload"].is<JsonObject>()) {
+                String payloadString;
+                serializeJson(doc["payload"], payloadString);
+                startWriteOpenPrintTagToTag(payloadString.c_str());
             }
         }
 

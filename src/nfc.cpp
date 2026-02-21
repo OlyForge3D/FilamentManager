@@ -9,6 +9,7 @@
 #include "scale.h"
 #include "bambu.h"
 #include "main.h"
+#include "openprinttag.h"
 
 //Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 Adafruit_PN532 nfc(PN532_IRQ, PN532_RESET);
@@ -1166,15 +1167,70 @@ bool decodeNdefAndReturnJson(const byte* encodedMessage, String uidString) {
   }
 
   // Print the record type for debugging
+  const uint8_t* recordTypePtr = &ndefRecord[1 + 1 + payloadLengthBytes];
   Serial.print("Record Type: ");
   for (int i = 0; i < typeLength; i++) {
-    Serial.print((char)ndefRecord[1 + 1 + payloadLengthBytes + i]);
+    Serial.print((char)recordTypePtr[i]);
   }
   Serial.println();
 
+  // --- Auto-detect tag format ---
+  const uint8_t* payloadPtr = &ndefRecord[payloadOffset];
+  NfcTagFormat tagFormat = detectTagFormat(payloadPtr, payloadLength, typeLength, recordTypePtr);
+  Serial.print("Detected tag format: ");
+  switch (tagFormat) {
+    case TAG_FORMAT_OPENSPOOL:    Serial.println("OpenSpool (JSON)"); break;
+    case TAG_FORMAT_OPENPRINTTAG: Serial.println("OpenPrintTag (binary TLV)"); break;
+    case TAG_FORMAT_RAW_SPOOL_ID: Serial.println("Raw Spool ID"); break;
+    default:                      Serial.println("Unknown"); break;
+  }
+
+  // --- Handle OpenPrintTag binary TLV format ---
+  if (tagFormat == TAG_FORMAT_OPENPRINTTAG) {
+    Serial.println("=== Parsing OpenPrintTag data ===");
+    OpenPrintTagData optData;
+    if (parseOpenPrintTag(payloadPtr, payloadLength, optData)) {
+      Serial.println("OpenPrintTag parsed successfully:");
+      Serial.printf("  Material: %s (%s)\n", optData.materialName.c_str(),
+                     optMaterialTypeToString(optData.materialType));
+      Serial.printf("  Brand: %s\n", optData.brandName.c_str());
+      if (optData.hasPrimaryColor)
+        Serial.printf("  Color: #%s\n", optColorToHexString(optData.primaryColor).c_str());
+      if (optData.minPrintTemp >= 0)
+        Serial.printf("  Print Temp: %d-%d°C\n", optData.minPrintTemp, optData.maxPrintTemp);
+
+      // Convert to JSON for web UI display
+      nfcJsonData = openPrintTagToJson(optData);
+      Serial.println("OpenPrintTag JSON for web UI:");
+      Serial.println(nfcJsonData);
+
+      // Also generate OpenSpool-compatible JSON for Spoolman matching
+      String openSpoolCompat = openPrintTagToOpenSpoolJson(optData);
+      Serial.println("OpenSpool-compatible JSON:");
+      Serial.println(openSpoolCompat);
+
+      // Send to web UI via WebSocket
+      String wsMsg = "{\"type\":\"nfcData\",\"format\":\"openprinttag\",\"payload\":" + nfcJsonData + "}";
+      ws.textAll(wsMsg);
+
+      // For Spoolman integration, use the OpenSpool-compatible format
+      // This allows existing spool matching logic to work
+      if (spoolmanConnected) {
+        oledShowProgressBar(2, octoEnabled ? 5 : 4, "OpenPrintTag", optData.materialName.c_str());
+        // Attempt to find matching spool in Spoolman by material/brand/color
+        // For now, set nfcJsonData to the openprinttag JSON so the web UI can display it
+      }
+    } else {
+      Serial.printf("OpenPrintTag parse error: %s\n", optData.parseError.c_str());
+      oledShowProgressBar(1, 1, "Failure", "Bad OpenPrintTag");
+      return false;
+    }
+    return true;
+  }
+
   nfcJsonData = "";
 
-  // Extract JSON payload with validation
+  // Extract JSON payload with validation (OpenSpool / FilaMan JSON format)
   uint32_t actualJsonLength = 0;
   for (uint32_t i = 0; i < payloadLength; i++) {
     byte currentByte = ndefRecord[payloadOffset + i];
@@ -1857,6 +1913,110 @@ void startWriteJsonToTag(const bool isSpoolTag, const char* payload) {
     oledShowProgressBar(0, 1, "FAILURE", "NFC busy!");
     // TBD: Add proper error handling (website)
   }
+}
+
+// Write OpenPrintTag binary TLV format to NFC tag
+// jsonConfig is a JSON string with field values to encode
+void startWriteOpenPrintTagToTag(const char* jsonConfig) {
+  Serial.println("=== OpenPrintTag Write Requested ===");
+
+  // Parse JSON config into OpenPrintTagData
+  JsonDocument doc;
+  DeserializationError err = deserializeJson(doc, jsonConfig);
+  if (err) {
+    Serial.printf("Failed to parse OpenPrintTag config: %s\n", err.c_str());
+    oledShowProgressBar(1, 1, "Write Error", "Bad config");
+    return;
+  }
+
+  OpenPrintTagData data;
+  data.materialClass = OPT_MC_FFF;
+
+  if (doc["material_type"].is<const char*>()) {
+    data.materialType = stringToOptMaterialType(doc["material_type"].as<const char*>());
+  }
+  if (doc["material_name"].is<const char*>()) data.materialName = doc["material_name"].as<String>();
+  if (doc["brand_name"].is<const char*>()) data.brandName = doc["brand_name"].as<String>();
+  if (doc["material_abbreviation"].is<const char*>()) data.materialAbbreviation = doc["material_abbreviation"].as<String>();
+
+  if (doc["color_hex"].is<const char*>()) {
+    data.primaryColor = hexStringToOptColor(doc["color_hex"].as<const char*>());
+    data.hasPrimaryColor = true;
+  }
+
+  if (doc["min_print_temp"].is<int>()) data.minPrintTemp = doc["min_print_temp"].as<int>();
+  if (doc["max_print_temp"].is<int>()) data.maxPrintTemp = doc["max_print_temp"].as<int>();
+  if (doc["min_bed_temp"].is<int>()) data.minBedTemp = doc["min_bed_temp"].as<int>();
+  if (doc["max_bed_temp"].is<int>()) data.maxBedTemp = doc["max_bed_temp"].as<int>();
+
+  if (doc["nominal_weight_g"].is<float>()) data.nominalNettoWeight = doc["nominal_weight_g"].as<float>();
+  if (doc["actual_weight_g"].is<float>()) data.actualNettoWeight = doc["actual_weight_g"].as<float>();
+  if (doc["spool_weight_g"].is<float>()) data.emptyContainerWeight = doc["spool_weight_g"].as<float>();
+
+  if (doc["density"].is<float>()) data.density = doc["density"].as<float>();
+  if (doc["filament_diameter"].is<float>()) data.filamentDiameter = doc["filament_diameter"].as<float>();
+
+  if (doc["instance_uuid"].is<const char*>()) data.instanceUuid = doc["instance_uuid"].as<String>();
+  if (doc["brand_uuid"].is<const char*>()) data.brandUuid = doc["brand_uuid"].as<String>();
+
+  // Build the NDEF message
+  uint16_t ndefLen = 0;
+  uint8_t* ndefMsg = buildOpenPrintTagNdefMessage(data, ndefLen);
+  if (!ndefMsg || ndefLen == 0) {
+    Serial.println("Failed to encode OpenPrintTag NDEF message");
+    oledShowProgressBar(1, 1, "Write Error", "Encode failed");
+    return;
+  }
+
+  Serial.printf("OpenPrintTag NDEF message: %d bytes\n", ndefLen);
+
+  // Write the raw NDEF pages to tag (starting at page 4)
+  if (nfcReaderState == NFC_IDLE || nfcReaderState == NFC_READ_ERROR || nfcReaderState == NFC_READ_SUCCESS) {
+    nfcReaderState = NFC_WRITING;
+    nfcWriteInProgress = true;
+    oledShowProgressBar(0, 1, "Writing", "OpenPrintTag");
+
+    // Pad to 4-byte page boundary
+    uint16_t paddedLen = ((ndefLen + 3) / 4) * 4;
+    uint8_t* padded = (uint8_t*)malloc(paddedLen);
+    memset(padded, 0, paddedLen);
+    memcpy(padded, ndefMsg, ndefLen);
+
+    bool writeSuccess = true;
+    uint16_t numPages = paddedLen / 4;
+    for (uint16_t i = 0; i < numPages; i++) {
+      if (!nfc.ntag2xx_WritePage(4 + i, padded + i * 4)) {
+        Serial.printf("Failed to write page %d\n", 4 + i);
+        writeSuccess = false;
+        break;
+      }
+      yield();
+      esp_task_wdt_reset();
+      vTaskDelay(pdMS_TO_TICKS(5));
+    }
+
+    free(padded);
+
+    if (writeSuccess) {
+      Serial.println("OpenPrintTag write successful!");
+      nfcReaderState = NFC_WRITE_SUCCESS;
+      oledShowProgressBar(1, 1, "Success", "Tag written");
+      ws.textAll("{\"type\":\"writeNfcTag\",\"success\":1,\"format\":\"openprinttag\"}");
+    } else {
+      Serial.println("OpenPrintTag write failed!");
+      nfcReaderState = NFC_WRITE_ERROR;
+      oledShowProgressBar(1, 1, "Failure", "Write error");
+      ws.textAll("{\"type\":\"writeNfcTag\",\"success\":0,\"format\":\"openprinttag\"}");
+    }
+
+    nfcWriteInProgress = false;
+    vTaskDelay(3000 / portTICK_PERIOD_MS);
+    nfcReaderState = NFC_IDLE;
+  } else {
+    oledShowProgressBar(0, 1, "FAILURE", "NFC busy!");
+  }
+
+  free(ndefMsg);
 }
 
 // Safe tag detection with manual retry logic and short timeouts
