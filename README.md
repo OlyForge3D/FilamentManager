@@ -92,6 +92,44 @@ When you scan a manufacturer NFC tag for the first time:
 - ✅ **Instant Integration** - Seamless Spoolman compatibility
 - ✅ **Future-Proof** - Tags work with any FilaMan-compatible system
 
+## OlyForge3D Fork Additions
+
+This fork extends FilaMan with additional NFC format support, backend integrations, and a PrintFarmer companion app.
+
+### OpenPrintTag NFC Format
+
+[OpenPrintTag](https://specs.openprinttag.org/) is Prusa's binary TLV NFC standard for filament spools. This fork reads and writes OpenPrintTag tags alongside the existing OpenSpool JSON format.
+
+**Auto-detection**: When scanning a tag, the format is automatically detected:
+- `application/json` with `"protocol":"openspool"` → OpenSpool
+- `application/vnd.openprinttag` binary TLV → OpenPrintTag
+- Unknown → reported to web UI
+
+**Supported OpenPrintTag fields**: material class/type/name, brand name, primary color, print/bed temperatures, spool weights, density, UUIDs, and certifications.
+
+### Moonraker/Klipper Backend
+
+Set the active spool on a Klipper printer via Moonraker's Spoolman integration:
+- **POST** `/server/spoolman/spool_id` — sets the active spool when a tag is scanned
+- Configurable Moonraker URL and API key in the web UI Settings page
+- Moonraker's `/server/spoolman/` endpoint can also proxy Spoolman API calls, so you can set the Spoolman URL to `http://<moonraker-host>:7125/server/spoolman` if Spoolman runs behind Moonraker
+
+### PrintFarmer Integration
+
+Report spool scans and device health to a [PrintFarmer](https://github.com/jpapiez/PrintFarmer) server:
+- **Heartbeat** — sends WiFi RSSI, NFC reader status, firmware version, free heap every 60 seconds
+- **Scan webhook** — reports each tag scan with spool ID, format, material, and brand
+- **Auto-registration** — the PrintFarmer server automatically registers the device on first heartbeat
+- Configurable server URL, API key, and associated printer ID in the Settings page
+
+### Configuration
+
+All new backend settings are in the **Settings** page (formerly "Spoolman"):
+- **Moonraker**: URL, API key, enable/disable
+- **PrintFarmer**: Server URL, API key, printer ID, enable/disable
+
+Settings persist in ESP32 NVS flash across reboots.
+
 ## Detailed Functionality
 
 ### ESP32 Functionality
