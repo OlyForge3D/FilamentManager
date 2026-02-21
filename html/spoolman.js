@@ -1,9 +1,9 @@
-// Globale Variablen
+// Global variables
 let spoolmanUrl = '';
 let spoolsData = [];
 let locationData = [];
 
-// Hilfsfunktionen für Datenmanipulation
+// Helper functions for data manipulation
 function processSpoolData(data) {
     return data.map(spool => ({
         id: spool.id,
@@ -14,31 +14,31 @@ function processSpoolData(data) {
     }));
 }
 
-// Dropdown-Funktionen
+// Dropdown functions
 function populateVendorDropdown(data, selectedSmId = null) {
     const vendorSelect = document.getElementById("vendorSelect");
     if (!vendorSelect) {
-        console.error('vendorSelect Element nicht gefunden');
+        console.error('vendorSelect element not found');
         return;
     }
     const onlyWithoutSmId = document.getElementById("onlyWithoutSmId");
     if (!onlyWithoutSmId) {
-        console.error('onlyWithoutSmId Element nicht gefunden');
+        console.error('onlyWithoutSmId element not found');
         return;
     }
 
-    // Separate Objekte für alle Hersteller und gefilterte Hersteller
+    // Separate objects for all vendors and filtered vendors
     const allVendors = {};
     const filteredVendors = {};
 
-    vendorSelect.innerHTML = '<option value="">Bitte wählen...</option>';
+    vendorSelect.innerHTML = '<option value="">Please select...</option>';
 
     let vendorIdToSelect = null;
     let totalSpools = 0;
     let spoolsWithoutTag = 0;
     let totalWeight = 0;
     let totalLength = 0;
-    // Neues Objekt für Material-Gruppierung
+    // New object for material grouping
     const materials = {};
 
     data.forEach(spool => {
@@ -48,13 +48,13 @@ function populateVendorDropdown(data, selectedSmId = null) {
 
         totalSpools++;
         
-        // Material zählen und gruppieren
+        // Count and group materials
         if (spool.filament.material) {
-            const material = spool.filament.material.toUpperCase(); // Normalisierung
+            const material = spool.filament.material.toUpperCase(); // Normalization
             materials[material] = (materials[material] || 0) + 1;
         }
 
-        // Addiere Gewicht und Länge
+        // Add weight and length
         if (spool.remaining_weight) {
             totalWeight += spool.remaining_weight;
         }
@@ -73,12 +73,12 @@ function populateVendorDropdown(data, selectedSmId = null) {
             spoolsWithoutTag++;
         }
 
-        // Alle Hersteller sammeln
+        // Collect all vendors
         if (!allVendors[vendor.id]) {
             allVendors[vendor.id] = vendor.name;
         }
 
-        // Gefilterte Hersteller für Dropdown
+        // Filtered vendors for dropdown
         if (!filteredVendors[vendor.id]) {
             if (!onlyWithoutSmId.checked || !hasValidNfcId) {
                 filteredVendors[vendor.id] = vendor.name;
@@ -86,19 +86,19 @@ function populateVendorDropdown(data, selectedSmId = null) {
         }
     });
 
-    // Nach der Schleife: Formatierung der Gesamtlänge
-    const lengthInM = totalLength / 1000;  // erst in m umrechnen
+    // After loop: format total length
+    const lengthInM = totalLength / 1000;  // convert to m first
     const formattedLength = lengthInM > 1000 
         ? (lengthInM / 1000).toFixed(2) + " km" 
         : lengthInM.toFixed(2) + " m";
 
-    // Formatierung des Gesamtgewichts (von g zu kg zu t)
-    const weightInKg = totalWeight / 1000;  // erst in kg umrechnen
+    // Format total weight (from g to kg to t)
+    const weightInKg = totalWeight / 1000;  // convert to kg first
     const formattedWeight = weightInKg > 1000 
         ? (weightInKg / 1000).toFixed(2) + " t" 
         : weightInKg.toFixed(2) + " kg";
 
-    // Dropdown mit gefilterten Herstellern befüllen - alphabetisch sortiert
+    // Fill dropdown with filtered vendors - alphabetically sorted
     Object.entries(filteredVendors)
         .sort(([, nameA], [, nameB]) => nameA.localeCompare(nameB)) // Sort vendors alphabetically by name
         .forEach(([id, name]) => {
@@ -110,18 +110,18 @@ function populateVendorDropdown(data, selectedSmId = null) {
 
     document.getElementById("totalSpools").textContent = totalSpools;
     document.getElementById("spoolsWithoutTag").textContent = spoolsWithoutTag;
-    // Zeige die Gesamtzahl aller Hersteller an
+    // Show total number of all vendors
     document.getElementById("totalVendors").textContent = Object.keys(allVendors).length;
     
-    // Neue Statistiken hinzufügen
+    // Add new statistics
     document.getElementById("totalWeight").textContent = formattedWeight;
     document.getElementById("totalLength").textContent = formattedLength;
 
-    // Material-Statistiken zum DOM hinzufügen
+    // Add material statistics to DOM
     const materialsList = document.getElementById("materialsList");
     materialsList.innerHTML = '';
     Object.entries(materials)
-        .sort(([,a], [,b]) => b - a) // Sortiere nach Anzahl absteigend
+        .sort(([,a], [,b]) => b - a) // Sort by count descending
         .forEach(([material, count]) => {
             const li = document.createElement("li");
             li.textContent = `${material}: ${count} ${count === 1 ? 'Spool' : 'Spools'}`;
@@ -134,16 +134,16 @@ function populateVendorDropdown(data, selectedSmId = null) {
     }
 }
 
-// Dropdown-Funktionen
+// Dropdown functions
 function populateLocationDropdown(data) {
     const locationSelect = document.getElementById("locationSelect");
     if (!locationSelect) {
-        console.error('locationSelect Element nicht gefunden');
+        console.error('locationSelect element not found');
         return;
     }
 
-    locationSelect.innerHTML = '<option value="">Bitte wählen...</option>';
-    // Dropdown mit gefilterten Herstellern befüllen - alphabetisch sortiert
+    locationSelect.innerHTML = '<option value="">Please select...</option>';
+    // Fill dropdown with filtered vendors - alphabetically sorted
     Object.entries(data)
         .sort(([, nameA], [, nameB]) => nameA.localeCompare(nameB)) // Sort vendors alphabetically by name
         .forEach(([id, name]) => {
@@ -163,14 +163,14 @@ function updateFilamentDropdown(selectedSmId = null) {
     const selectedColor = document.getElementById("selected-color");
 
     dropdownContentInner.innerHTML = '';
-    selectedText.textContent = "Bitte wählen...";
+    selectedText.textContent = "Please select...";
     selectedColor.style.backgroundColor = '#FFFFFF';
 
     if (vendorId) {
         const filteredFilaments = spoolsData.filter(spool => {
             if (!spool?.filament?.vendor?.id) {
-                console.log('Problem aufgetreten bei: ', spool?.filament?.vendor);
-                console.log('Problematische Spulen:', 
+                console.log('Problem occurred with: ', spool?.filament?.vendor);
+                console.log('Problematic spools:', 
                     spoolsData.filter(spool => !spool?.filament?.vendor?.id));
                 return false;
             }
@@ -272,7 +272,7 @@ function selectFilament(spool) {
     }));
 }
 
-// Initialisierung und Event-Handler
+// Initialization and event handlers
 async function initSpoolman() {
     try {
         const response = await fetch('/api/url');
@@ -282,7 +282,7 @@ async function initSpoolman() {
         
         const data = await response.json();
         if (!data.spoolman_url) {
-            throw new Error('spoolman_url nicht in der Antwort gefunden');
+            throw new Error('spoolman_url not found in response');
         }
         
         spoolmanUrl = data.spoolman_url;
@@ -302,7 +302,7 @@ async function initSpoolman() {
 
 
     } catch (error) {
-        console.error('Fehler beim Initialisieren von Spoolman:', error);
+        console.error('Error initializing Spoolman:', error);
         document.dispatchEvent(new CustomEvent('spoolmanError', { 
             detail: { message: error.message } 
         }));
@@ -312,7 +312,7 @@ async function initSpoolman() {
 async function fetchSpoolData() {
     try {
         if (!spoolmanUrl) {
-            throw new Error('Spoolman URL ist nicht initialisiert');
+            throw new Error('Spoolman URL is not initialized');
         }
         
         const response = await fetch(`${spoolmanUrl}/api/v1/spool`);
@@ -323,7 +323,7 @@ async function fetchSpoolData() {
         const data = await response.json();
         return data;
     } catch (error) {
-        console.error('Fehler beim Abrufen der Spulen-Daten:', error);
+        console.error('Error fetching spool data:', error);
         return [];
     }
 }
@@ -331,7 +331,7 @@ async function fetchSpoolData() {
 async function fetchLocationData() {
     try {
         if (!spoolmanUrl) {
-            throw new Error('Spoolman URL ist nicht initialisiert');
+            throw new Error('Spoolman URL is not initialized');
         }
         
         const response = await fetch(`${spoolmanUrl}/api/v1/location`);
@@ -342,7 +342,7 @@ async function fetchLocationData() {
         const data = await response.json();
         return data;
     } catch (error) {
-        console.error('Fehler beim Abrufen der Location-Daten:', error);
+        console.error('Error fetching location data:', error);
         return [];
     }
 }
@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
         refreshButton.addEventListener('click', async () => {
             try {
                 refreshButton.disabled = true;
-                refreshButton.textContent = 'Wird aktualisiert...';
+                refreshButton.textContent = 'Updating...';
                 await initSpoolman();
                 refreshButton.textContent = 'Refresh Spoolman';
             } finally {
@@ -401,7 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Exportiere Funktionen
+// Export functions
 window.getSpoolData = () => spoolsData;
 window.setSpoolData = (data) => { spoolsData = data; };
 window.reloadSpoolData = initSpoolman;
@@ -413,7 +413,7 @@ window.toggleFilamentDropdown = () => {
     content.classList.toggle("show");
 };
 
-// Event Listener für Click außerhalb Dropdown
+// Event listener for click outside dropdown
 window.onclick = function(event) {
     if (!event.target.closest('.custom-dropdown')) {
         const dropdowns = document.getElementsByClassName("dropdown-content");

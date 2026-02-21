@@ -67,7 +67,7 @@ JsonDocument fetchSingleSpoolInfo(int spoolId) {
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, payload);
         if (error) {
-            Serial.print("Fehler beim Parsen der JSON-Antwort: ");
+            Serial.print("Error parsing JSON response: ");
             Serial.println(error.c_str());
         } else {
             String filamentType = doc["filament"]["material"].as<String>();
@@ -111,7 +111,7 @@ JsonDocument fetchSingleSpoolInfo(int spoolId) {
             filteredDoc["bambu_setting_id"] = bambu_setting_id;
         }
     } else {
-        Serial.print("Fehler beim Abrufen der Spool-Daten. HTTP-Code: ");
+        Serial.print("Error fetching spool data. HTTP code: ");
         Serial.println(httpCode);
     }
 
@@ -196,13 +196,13 @@ void sendToApi(void *parameter) {
 
     // Process successful response
     if (success) {
-        Serial.println("Spoolman Abfrage erfolgreich");
+        Serial.println("Spoolman query successful");
 
-        // Restgewicht der Spule auslesen
+        // Read remaining spool weight
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, responsePayload);
         if (error) {
-            Serial.print("Fehler beim Parsen der JSON-Antwort: ");
+            Serial.print("Error parsing JSON response: ");
             Serial.println(error.c_str());
         } else {
             switch(requestType){
@@ -278,13 +278,13 @@ void sendToApi(void *parameter) {
         }
         doc.clear();
     } else if (httpCode == HTTP_CODE_CREATED) {
-        Serial.println("Spoolman erfolgreich erstellt");
+        Serial.println("Spoolman successfully created");
         
         // Parse response for created resources  
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, responsePayload);
         if (error) {
-            Serial.print("Fehler beim Parsen der JSON-Antwort: ");
+            Serial.print("Error parsing JSON response: ");
             Serial.println(error.c_str());
         } else {
             switch(requestType){
@@ -404,14 +404,14 @@ void sendToApi(void *parameter) {
             createdSpoolId = 0; // Set to 0 to indicate error instead of hanging
             break;
         }
-        Serial.println("Fehler beim Senden an Spoolman! HTTP Code: " + String(httpCode));
+        Serial.println("Error sending to Spoolman! HTTP code: " + String(httpCode));
         vTaskDelay(2000 / portTICK_PERIOD_MS);
         nfcReaderState = NFC_IDLE; // Reset NFC state to allow retry
     }
 
     vTaskDelay(50 / portTICK_PERIOD_MS);
 
-    // Speicher freigeben
+    // Free memory
     delete params;
     HEAP_DEBUG_MESSAGE("sendToApi end");
     spoolmanApiState = API_IDLE;
@@ -425,25 +425,25 @@ bool updateSpoolTagId(String uidString, const char* payload) {
     DeserializationError error = deserializeJson(doc, payload);
     
     if (error) {
-        Serial.print("Fehler beim JSON-Parsing: ");
+        Serial.print("Error parsing JSON: ");
         Serial.println(error.c_str());
         return false;
     }
     
-    // Überprüfe, ob die erforderlichen Felder vorhanden sind
+    // Check if required fields are present
     if (!doc["sm_id"].is<String>() || doc["sm_id"].as<String>() == "") {
-        Serial.println("Keine Spoolman-ID gefunden.");
+        Serial.println("No Spoolman ID found.");
         return false;
     }
 
     String spoolId = doc["sm_id"].as<String>();
     String spoolsUrl = spoolmanUrl + apiUrl + "/spool/" + spoolId;
-    Serial.print("Update Spule mit URL: ");
+    Serial.print("Update spool with URL: ");
     Serial.println(spoolsUrl);
     
     doc.clear();
 
-    // Update Payload erstellen
+    // Create update payload
     JsonDocument updateDoc;
     updateDoc["extra"]["nfc_id"] = "\""+uidString+"\"";
     
@@ -454,7 +454,7 @@ bool updateSpoolTagId(String uidString, const char* payload) {
 
     SendToApiParams* params = new SendToApiParams();  
     if (params == nullptr) {
-        Serial.println("Fehler: Kann Speicher für Task-Parameter nicht allokieren.");
+        Serial.println("Error: Cannot allocate memory for task parameters.");
         return false;
     }
     params->requestType = API_REQUEST_SPOOL_TAG_ID_UPDATE;
@@ -467,14 +467,14 @@ bool updateSpoolTagId(String uidString, const char* payload) {
     params->spoolIdForWeight = spoolId;
     params->weightValue = weight;
 
-    // Erstelle die Task mit erhöhter Stackgröße für zusätzliche HTTP-Anfrage
+    // Create task with increased stack size for additional HTTP request
     BaseType_t result = xTaskCreate(
         sendToApi,                // Task-Funktion
         "SendToApiTask",          // Task-Name
-        8192,                     // Erhöhte Stackgröße für zusätzliche HTTP-Anfrage
+        8192,                     // Increased stack size for additional HTTP request
         (void*)params,            // Parameter
-        0,                        // Priorität
-        apiTask                   // Task-Handle (nicht benötigt)
+        0,                        // Priority
+        apiTask                   // Task handle (not needed)
     );
 
     updateDoc.clear();
@@ -489,10 +489,10 @@ uint8_t updateSpoolWeight(String spoolId, uint16_t weight) {
     HEAP_DEBUG_MESSAGE("updateSpoolWeight begin");
     oledShowProgressBar(3, octoEnabled?5:4, "Spool Tag", "Spoolman update");
     String spoolsUrl = spoolmanUrl + apiUrl + "/spool/" + spoolId + "/measure";
-    Serial.print("Update Spule mit URL: ");
+    Serial.print("Update spool with URL: ");
     Serial.println(spoolsUrl);
 
-    // Update Payload erstellen
+    // Create update payload
     JsonDocument updateDoc;
     updateDoc["weight"] = weight;
     
@@ -504,7 +504,7 @@ uint8_t updateSpoolWeight(String spoolId, uint16_t weight) {
     SendToApiParams* params = new SendToApiParams();
     if (params == nullptr) {
         // TBD: reset ESP instead of showing a message
-        Serial.println("Fehler: Kann Speicher für Task-Parameter nicht allokieren.");
+        Serial.println("Error: Cannot allocate memory for task parameters.");
         return 0;
     }
     params->requestType = API_REQUEST_SPOOL_WEIGHT_UPDATE;
@@ -512,14 +512,14 @@ uint8_t updateSpoolWeight(String spoolId, uint16_t weight) {
     params->spoolsUrl = spoolsUrl;
     params->updatePayload = updatePayload;
 
-    // Erstelle die Task
+    // Create task
     BaseType_t result = xTaskCreate(
         sendToApi,                // Task-Funktion
         "SendToApiTask",          // Task-Name
-        6144,                     // Stackgröße in Bytes
+        6144,                     // Stack size in bytes
         (void*)params,            // Parameter
-        0,                        // Priorität
-        apiTask                      // Task-Handle (nicht benötigt)
+        0,                        // Priority
+        apiTask                      // Task handle (not needed)
     );
 
     updateDoc.clear();
@@ -534,10 +534,10 @@ uint8_t updateSpoolLocation(String spoolId, String location){
     oledShowProgressBar(3, octoEnabled?5:4, "Loc. Tag", "Spoolman update");
 
     String spoolsUrl = spoolmanUrl + apiUrl + "/spool/" + spoolId;
-    Serial.print("Update Spule mit URL: ");
+    Serial.print("Update spool with URL: ");
     Serial.println(spoolsUrl);
 
-    // Update Payload erstellen
+    // Create update payload
     JsonDocument updateDoc;
     updateDoc["location"] = location;
     
@@ -548,7 +548,7 @@ uint8_t updateSpoolLocation(String spoolId, String location){
 
     SendToApiParams* params = new SendToApiParams();
     if (params == nullptr) {
-        Serial.println("Fehler: Kann Speicher für Task-Parameter nicht allokieren.");
+        Serial.println("Error: Cannot allocate memory for task parameters.");
         return 0;
     }
     params->requestType = API_REQUEST_SPOOL_LOCATION_UPDATE;
@@ -558,13 +558,13 @@ uint8_t updateSpoolLocation(String spoolId, String location){
 
 
     if(apiTask == nullptr){
-        // Erstelle die Task
+        // Create task
         BaseType_t result = xTaskCreate(
             sendToApi,                // Task-Funktion
             "SendToApiTask",          // Task-Name
-            6144,                     // Stackgröße in Bytes
+            6144,                     // Stack size in bytes
             (void*)params,            // Parameter
-            0,                        // Priorität
+            0,                        // Priority
             apiTask                   // Task-Handle
         );
     }else{
@@ -581,7 +581,7 @@ bool updateSpoolOcto(int spoolId) {
     oledShowProgressBar(4, octoEnabled?5:4, "Spool Tag", "Octoprint update");
 
     String spoolsUrl = octoUrl + "/plugin/Spoolman/selectSpool";
-    Serial.print("Update Spule in Octoprint mit URL: ");
+    Serial.print("Update spool in Octoprint with URL: ");
     Serial.println(spoolsUrl);
 
     JsonDocument updateDoc;
@@ -595,7 +595,7 @@ bool updateSpoolOcto(int spoolId) {
 
     SendToApiParams* params = new SendToApiParams();
     if (params == nullptr) {
-        Serial.println("Fehler: Kann Speicher für Task-Parameter nicht allokieren.");
+        Serial.println("Error: Cannot allocate memory for task parameters.");
         return false;
     }
     params->requestType = API_REQUEST_OCTO_SPOOL_UPDATE;
@@ -604,14 +604,14 @@ bool updateSpoolOcto(int spoolId) {
     params->updatePayload = updatePayload;
     params->octoToken = octoToken;
 
-    // Erstelle die Task
+    // Create task
     BaseType_t result = xTaskCreate(
         sendToApi,                // Task-Funktion
         "SendToApiTask",          // Task-Name
-        6144,                     // Stackgröße in Bytes
+        6144,                     // Stack size in bytes
         (void*)params,            // Parameter
-        0,                        // Priorität
-        apiTask                      // Task-Handle (nicht benötigt)
+        0,                        // Priority
+        apiTask                      // Task handle (not needed)
     );
 
     updateDoc.clear();
@@ -623,13 +623,13 @@ bool updateSpoolBambuData(String payload) {
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, payload);
     if (error) {
-        Serial.print("Fehler beim JSON-Parsing: ");
+        Serial.print("Error parsing JSON: ");
         Serial.println(error.c_str());
         return false;
     }
 
     String spoolsUrl = spoolmanUrl + apiUrl + "/filament/" + doc["filament_id"].as<String>();
-    Serial.print("Update Spule mit URL: ");
+    Serial.print("Update spool with URL: ");
     Serial.println(spoolsUrl);
 
     JsonDocument updateDoc;
@@ -649,7 +649,7 @@ bool updateSpoolBambuData(String payload) {
 
     SendToApiParams* params = new SendToApiParams();
     if (params == nullptr) {
-        Serial.println("Fehler: Kann Speicher für Task-Parameter nicht allokieren.");
+        Serial.println("Error: Cannot allocate memory for task parameters.");
         return false;
     }
     params->requestType = API_REQUEST_BAMBU_UPDATE;
@@ -657,14 +657,14 @@ bool updateSpoolBambuData(String payload) {
     params->spoolsUrl = spoolsUrl;
     params->updatePayload = updatePayload;
 
-    // Erstelle die Task
+    // Create task
     BaseType_t result = xTaskCreate(
         sendToApi,                // Task-Funktion
         "SendToApiTask",          // Task-Name
-        6144,                     // Stackgröße in Bytes
+        6144,                     // Stack size in bytes
         (void*)params,            // Parameter
-        0,                        // Priorität
-        apiTask                      // Task-Handle (nicht benötigt)
+        0,                        // Priority
+        apiTask                      // Task handle (not needed)
     );
 
     return true;
@@ -711,7 +711,7 @@ uint16_t createVendor(const JsonDocument& payload) {
 
     SendToApiParams* params = new SendToApiParams();
     if (params == nullptr) {
-        Serial.println("Fehler: Kann Speicher für Task-Parameter nicht allokieren.");
+        Serial.println("Error: Cannot allocate memory for task parameters.");
         vendorDoc.clear();
         return 0;
     }
@@ -724,10 +724,10 @@ uint16_t createVendor(const JsonDocument& payload) {
     BaseType_t result = xTaskCreate(
         sendToApi,                // Task-Funktion
         "SendToApiTask",          // Task-Name
-        6144,                     // Stackgröße in Bytes
+        6144,                     // Stack size in bytes
         (void*)params,            // Parameter
-        0,                        // Priorität
-        NULL                      // Task-Handle (nicht benötigt)
+        0,                        // Priority
+        NULL                      // Task handle (not needed)
     );
 
     if (result != pdPASS) {
@@ -766,7 +766,7 @@ uint16_t checkVendor(const JsonDocument& payload) {
 
     SendToApiParams* params = new SendToApiParams();
     if (params == nullptr) {
-        Serial.println("Fehler: Kann Speicher für Task-Parameter nicht allokieren.");
+        Serial.println("Error: Cannot allocate memory for task parameters.");
         return 0;
     }
     params->requestType = API_REQUEST_VENDOR_CHECK;
@@ -780,14 +780,14 @@ uint16_t checkVendor(const JsonDocument& payload) {
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
     
-    // Erstelle die Task
+    // Create task
     BaseType_t result = xTaskCreate(
         sendToApi,                // Task-Funktion
         "SendToApiTask",          // Task-Name
-        6144,                     // Stackgröße in Bytes
+        6144,                     // Stack size in bytes
         (void*)params,            // Parameter
-        0,                        // Priorität
-        NULL                      // Task-Handle (nicht benötigt)
+        0,                        // Priority
+        NULL                      // Task handle (not needed)
     );
     
     // Wait until foundVendorId is updated by the API response (not 65535 anymore)
@@ -866,7 +866,7 @@ uint16_t createFilament(uint16_t vendorId, const JsonDocument& payload) {
 
     SendToApiParams* params = new SendToApiParams();
     if (params == nullptr) {
-        Serial.println("Fehler: Kann Speicher für Task-Parameter nicht allokieren.");
+        Serial.println("Error: Cannot allocate memory for task parameters.");
         filamentDoc.clear();
         return 0;
     }
@@ -879,10 +879,10 @@ uint16_t createFilament(uint16_t vendorId, const JsonDocument& payload) {
     BaseType_t result = xTaskCreate(
         sendToApi,                // Task-Funktion
         "SendToApiTask",          // Task-Name
-        6144,                     // Stackgröße in Bytes
+        6144,                     // Stack size in bytes
         (void*)params,            // Parameter
-        0,                        // Priorität
-        NULL                      // Task-Handle (nicht benötigt)
+        0,                        // Priority
+        NULL                      // Task handle (not needed)
     );
 
     if (result != pdPASS) {
@@ -918,7 +918,7 @@ uint16_t checkFilament(uint16_t vendorId, const JsonDocument& payload) {
 
     SendToApiParams* params = new SendToApiParams();
     if (params == nullptr) {
-        Serial.println("Fehler: Kann Speicher für Task-Parameter nicht allokieren.");
+        Serial.println("Error: Cannot allocate memory for task parameters.");
         return 0;
     }
     params->requestType = API_REQUEST_FILAMENT_CHECK;
@@ -926,14 +926,14 @@ uint16_t checkFilament(uint16_t vendorId, const JsonDocument& payload) {
     params->spoolsUrl = spoolsUrl;
     params->updatePayload = ""; // Empty for GET request
 
-     // Erstelle die Task
+     // Create task
     BaseType_t result = xTaskCreate(
         sendToApi,                // Task-Funktion
         "SendToApiTask",          // Task-Name
-        6144,                     // Stackgröße in Bytes
+        6144,                     // Stack size in bytes
         (void*)params,            // Parameter
-        0,                        // Priorität
-        NULL                      // Task-Handle (nicht benötigt)
+        0,                        // Priority
+        NULL                      // Task handle (not needed)
     );
     
     // Wait until foundFilamentId is updated by the API response (not 65535 anymore)
@@ -990,7 +990,7 @@ uint16_t createSpool(uint16_t vendorId, uint16_t filamentId, JsonDocument& paylo
 
     SendToApiParams* params = new SendToApiParams();
     if (params == nullptr) {
-        Serial.println("Fehler: Kann Speicher für Task-Parameter nicht allokieren.");
+        Serial.println("Error: Cannot allocate memory for task parameters.");
         spoolDoc.clear();
         return 0;
     }
@@ -1003,10 +1003,10 @@ uint16_t createSpool(uint16_t vendorId, uint16_t filamentId, JsonDocument& paylo
     BaseType_t result = xTaskCreate(
         sendToApi,                // Task-Funktion
         "SendToApiTask",          // Task-Name
-        6144,                     // Stackgröße in Bytes
+        6144,                     // Stack size in bytes
         (void*)params,            // Parameter
-        0,                        // Priorität
-        NULL                      // Task-Handle (nicht benötigt)
+        0,                        // Priority
+        NULL                      // Task handle (not needed)
     );
 
     if (result != pdPASS) {
@@ -1251,13 +1251,13 @@ bool checkSpoolmanExtraFields() {
             "\"key\": \"bambu_max_volspeed\"}"
         };
 
-        Serial.println("Überprüfe Extrafelder...");
+        Serial.println("Checking extra fields...");
 
         int urlLength = sizeof(checkUrls) / sizeof(checkUrls[0]);
 
         for (uint8_t i = 0; i < urlLength; i++) {
             Serial.println();
-            Serial.println("-------- Prüfe Felder für "+checkUrls[i]+" --------");
+            Serial.println("-------- Checking fields for "+checkUrls[i]+" --------");
             http.begin(checkUrls[i]);
             int httpCode = http.GET();
         
@@ -1284,31 +1284,31 @@ bool checkSpoolmanExtraFields() {
                         bool found = false;
                         for (JsonObject field : doc.as<JsonArray>()) {
                             if (field["key"].is<String>() && field["key"] == extraFields[s]) {
-                                Serial.println("Feld gefunden: " + extraFields[s]);
+                                Serial.println("Field found: " + extraFields[s]);
                                 found = true;
                                 break;
                             }
                         }
                         if (!found) {
-                            Serial.println("Feld nicht gefunden: " + extraFields[s]);
+                            Serial.println("Field not found: " + extraFields[s]);
 
-                            // Extrafeld hinzufügen
+                            // Add extra field
                             http.begin(checkUrls[i] + "/" + extraFields[s]);
                             http.addHeader("Content-Type", "application/json");
                             int httpCode = http.POST(extraFieldData[s]);
 
                             if (httpCode > 0) {
-                                // Antwortscode und -nachricht abrufen
+                                // Get response code and message
                                 String response = http.getString();
-                                //Serial.println("HTTP-Code: " + String(httpCode));
-                                //Serial.println("Antwort: " + response);
+                                //Serial.println("HTTP code: " + String(httpCode));
+                                //Serial.println("Response: " + response);
                                 if (httpCode != HTTP_CODE_OK) {
 
                                     return false;
                                 }
                             } else {
-                                // Fehler beim Senden der Anfrage
-                                Serial.println("Fehler beim Senden der Anfrage: " + String(http.errorToString(httpCode)));
+                                // Error sending request
+                                Serial.println("Error sending request: " + String(http.errorToString(httpCode)));
                                 return false;
                             }
                             //http.end();
@@ -1321,7 +1321,7 @@ bool checkSpoolmanExtraFields() {
             }
         }
         
-        Serial.println("-------- ENDE Prüfe Felder --------");
+        Serial.println("-------- END checking fields --------");
         Serial.println();
 
         http.end();
@@ -1358,7 +1358,7 @@ bool checkSpoolmanInstance() {
                     http.end();
 
                     if (!checkSpoolmanExtraFields()) {
-                        Serial.println("Fehler beim Überprüfen der Extrafelder.");
+                        Serial.println("Error checking extra fields.");
 
                         // TBD
                         oledShowMessage("Spoolman Error creating Extrafields");

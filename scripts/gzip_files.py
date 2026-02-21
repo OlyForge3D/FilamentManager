@@ -16,7 +16,7 @@ def should_compress(file):
      # Skip compression for spoolman.html
     if file == 'spoolman.html' or file == 'waage.html':
         return False
-    # Komprimiere nur bestimmte Dateitypen
+    # Only compress certain file types
     return file.endswith(('.js', '.png', '.css', '.html'))
 
 def main(source_dir, target_dir):

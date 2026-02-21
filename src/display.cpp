@@ -12,7 +12,7 @@ bool iconToggle = false;
 void setupDisplay() {
     if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
         Serial.println(F("SSD1306 allocation failed"));
-        for (;;); // Stoppe das Programm, wenn das Display nicht initialisiert werden kann
+        for (;;); // Stop the program if the display cannot be initialized
     }
     display.setTextColor(WHITE);
     display.clearDisplay();
@@ -53,7 +53,7 @@ int oled_center_v(const String &text) {
     int16_t x1, y1;
     uint16_t w, h;
     display.getTextBounds(text, 0, OLED_DATA_START, &x1, &y1, &w, &h);
-    // Zentrierung nur im Datenbereich zwischen OLED_DATA_START und OLED_DATA_END
+    // Center only in data area between OLED_DATA_START and OLED_DATA_END
     return OLED_DATA_START + ((OLED_DATA_END - OLED_DATA_START - h) / 2);
 }
 
@@ -61,55 +61,55 @@ std::vector<String> splitTextIntoLines(const String &text, uint8_t textSize) {
     std::vector<String> lines;
     display.setTextSize(textSize);
     
-    // Text in Wörter aufteilen
+    // Split text into words
     std::vector<String> words;
     int pos = 0;
     while (pos < text.length()) {
-        // Überspringe Leerzeichen am Anfang
+        // Skip leading spaces
         while (pos < text.length() && text[pos] == ' ') pos++;
         
-        // Finde nächstes Leerzeichen
+        // Find next space
         int nextSpace = text.indexOf(' ', pos);
         if (nextSpace == -1) {
-            // Letztes Wort
+            // Last word
             if (pos < text.length()) {
                 words.push_back(text.substring(pos));
             }
             break;
         }
-        // Wort hinzufügen
+        // Add word
         words.push_back(text.substring(pos, nextSpace));
         pos = nextSpace + 1;
     }
     
-    // Wörter zu Zeilen zusammenfügen
+    // Join words into lines
     String currentLine = "";
     for (size_t i = 0; i < words.size(); i++) {
         String testLine = currentLine;
         if (currentLine.length() > 0) testLine += " ";
         testLine += words[i];
         
-        // Prüfe ob diese Kombination auf die Zeile passt
+        // Check if this combination fits on the line
         int16_t x1, y1;
         uint16_t lineWidth, h;
         display.getTextBounds(testLine, 0, OLED_DATA_START, &x1, &y1, &lineWidth, &h);
         
         if (lineWidth <= SCREEN_WIDTH) {
-            // Passt noch in diese Zeile
+            // Still fits on this line
             currentLine = testLine;
         } else {
-            // Neue Zeile beginnen
+            // Start new line
             if (currentLine.length() > 0) {
                 lines.push_back(currentLine);
                 currentLine = words[i];
             } else {
-                // Ein einzelnes Wort ist zu lang
+                // A single word is too long
                 lines.push_back(words[i]);
             }
         }
     }
     
-    // Letzte Zeile hinzufügen
+    // Add last line
     if (currentLine.length() > 0) {
         lines.push_back(currentLine);
     }
@@ -119,18 +119,18 @@ std::vector<String> splitTextIntoLines(const String &text, uint8_t textSize) {
 
 void oledShowMultilineMessage(const String &message, uint8_t size) {
     std::vector<String> lines;
-    int maxLines = 3;  // Maximale Anzahl Zeilen für size 2
+    int maxLines = 3;  // Maximum number of lines for size 2
     
-    // Erste Prüfung mit aktueller Größe
+    // First check with current size
     lines = splitTextIntoLines(message, size);
     
-    // Wenn mehr als maxLines Zeilen, reduziere Textgröße
+    // If more than maxLines lines, reduce text size
     if (lines.size() > maxLines && size > 1) {
         size = 1;
         lines = splitTextIntoLines(message, size);
     }
     
-    // Ausgabe
+    // Output
     display.setTextSize(size);
     int lineHeight = size * 8;
     int totalHeight = lines.size() * lineHeight;
@@ -150,12 +150,12 @@ void oledShowMessage(const String &message, uint8_t size) {
     display.setTextSize(size);
     display.setTextWrap(false);
     
-    // Prüfe ob Text in eine Zeile passt
+    // Check if text fits in one line
     int16_t x1, y1;
     uint16_t textWidth, h;
     display.getTextBounds(message, 0, 0, &x1, &y1, &textWidth, &h);
    
-    // Text passt in eine Zeile?
+    // Text fits in one line?
     if (textWidth <= SCREEN_WIDTH) {
         display.setCursor(oled_center_h(message), oled_center_v(message));
         display.print(message);
@@ -257,7 +257,7 @@ void oledShowProgressBar(const uint8_t step, const uint8_t numSteps, const char*
 }
 
 void oledShowWeight(uint16_t weight) {
-    // Display Gewicht
+    // Display weight
     oledcleardata();
     display.setTextSize(3);
     display.setCursor(oled_center_h(String(weight)+" g"), OLED_DATA_START+10);

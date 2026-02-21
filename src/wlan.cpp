@@ -13,19 +13,19 @@ bool wm_nonblocking = false;
 uint8_t wifiErrorCounter = 0;
 
 void wifiSettings() {
-    // Optimierte WiFi-Einstellungen
+    // Optimized WiFi settings
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
     WiFi.setSleep(false); // disable sleep mode
     WiFi.setHostname("FilaMan");
     esp_wifi_set_ps(WIFI_PS_NONE);
     
-    // Maximale Sendeleistung
+    // Maximum transmit power
     WiFi.setTxPower(WIFI_POWER_19_5dBm); // Set maximum transmit power
   
     // Optimiere TCP/IP Stack
     esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N);
     
-    // Aktiviere WiFi-Roaming für bessere Stabilität
+    // Enable WiFi roaming for better stability
     esp_wifi_set_rssi_threshold(-80);
 }
 
@@ -58,7 +58,7 @@ void initWiFi() {
   });
 
   if(wm_nonblocking) wm.setConfigPortalBlocking(false);
-  //wm.setConfigPortalTimeout(320); // Portal nach 5min schließen
+  //wm.setConfigPortalTimeout(320); // Close portal after 5min
   wm.setWiFiAutoReconnect(true);
   wm.setConnectTimeout(10);
 
@@ -93,8 +93,8 @@ void checkWiFiConnection() {
     wifiOn = false;
     oledShowTopRow();
     oledShowMessage("WiFi reconnecting");
-    WiFi.reconnect(); // Versuche, die Verbindung wiederherzustellen
-    vTaskDelay(5000 / portTICK_PERIOD_MS); // Warte 5 Sekunden, bevor erneut geprüft wird
+    WiFi.reconnect(); // Try to reconnect
+    vTaskDelay(5000 / portTICK_PERIOD_MS); // Wait 5 seconds before checking again
     if (WiFi.status() != WL_CONNECTED) 
     {
       Serial.println("Failed to reconnect. Restarting WiFi...");

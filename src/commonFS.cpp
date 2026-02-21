@@ -8,7 +8,7 @@ bool removeJsonValue(const char* filename) {
     }
     file.close();
     if (!LittleFS.remove(filename)) {
-        Serial.print("Fehler beim Löschen der Datei: ");
+        Serial.print("Error deleting file: ");
         Serial.println(filename);
         return false;
     }
@@ -18,13 +18,13 @@ bool removeJsonValue(const char* filename) {
 bool saveJsonValue(const char* filename, const JsonDocument& doc) {
     File file = LittleFS.open(filename, "w");
     if (!file) {
-        Serial.print("Fehler beim Öffnen der Datei zum Schreiben: ");
+        Serial.print("Error opening file for writing: ");
         Serial.println(filename);
         return false;
     }
 
     if (serializeJson(doc, file) == 0) {
-        Serial.println("Fehler beim Serialisieren von JSON.");
+        Serial.println("Error serializing JSON.");
         file.close();
         return false;
     }
@@ -36,14 +36,14 @@ bool saveJsonValue(const char* filename, const JsonDocument& doc) {
 bool loadJsonValue(const char* filename, JsonDocument& doc) {
     File file = LittleFS.open(filename, "r");
     if (!file) {
-        Serial.print("Fehler beim Öffnen der Datei zum Lesen: ");
+        Serial.print("Error opening file for reading: ");
         Serial.println(filename);
         return false;
     }
     DeserializationError error = deserializeJson(doc, file);
     file.close();
     if (error) {
-        Serial.print("Fehler beim Deserialisieren von JSON: ");
+        Serial.print("Error deserializing JSON: ");
         Serial.println(error.f_str());
         return false;
     }

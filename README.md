@@ -1,145 +1,85 @@
-# FilaMan - Filament Management System
+# FilamentManager
 
-[Deutsche Version](README.de.md)
+> **An ESP32 NFC filament management system for 3D printing.**
+> Read and write NFC spool tags, track filament usage, and integrate with Spoolman, Moonraker/Klipper, Bambu Lab AMS, and [PrintFarmer](https://github.com/jpapiez/PrintFarmer).
 
-FilaMan is a filament management system for 3D printing. It uses ESP32 hardware for weight measurement and NFC tag management. 
-Users can manage filament spools, monitor the status of the Automatic Material System (AMS) and make settings via a web interface. 
-The system integrates seamlessly with [Bambulab](https://bambulab.com/en-us) 3D printers and [Spoolman](https://github.com/Donkie/Spoolman) filament management as well as the [Openspool](https://github.com/spuder/OpenSpool) NFC-TAG format.
+## Credits & Origin
 
+This project is a fork of [**FilaMan**](https://github.com/ManuelW77/Filaman) by [ManuelW77](https://github.com/ManuelW77). FilaMan provides the ESP32 + PN532 hardware platform, WiFiManager captive portal, Spoolman integration, Bambu Lab AMS MQTT support, optional HX711 scale, OLED display, OTA updates, and the full web UI that this project builds upon.
 
-![Scale](./img/scale_trans.png)
-
-
-More Images can be found in the [img Folder](/img/)  
-or my website: [FilaMan Website](https://www.filaman.app)  
-german explanatory video: [Youtube](https://youtu.be/uNDe2wh9SS8?si=b-jYx4I1w62zaOHU)  
-Discord Server: [https://discord.gg/my7Gvaxj2v](https://discord.gg/my7Gvaxj2v)
-
-## NEW: Recycling Fabrik
-
-<a href="https://www.recyclingfabrik.com" target="_blank">
-    <img src="img/rf-logo.png" alt="Recycling Fabrik" width="200">
-</a>
-
-FilaMan is supported by [Recycling Fabrik](https://www.recyclingfabrik.com).
-Recycling Fabrik will soon offer a FilaMan-compatible NFC tag on their spools. This has the advantage
-that the spools can be automatically recognized and imported into Spoolman directly via FilaMan.
-
-**What is Recycling Fabrik?**
-
-Recycling Fabrik is a German company dedicated to developing and manufacturing sustainable 3D printing filament. 
-Their filaments are made from 100% recycled material from both end customers and industry – for an environmentally conscious and resource-saving future.
-
-More information and products can be found here: [www.recyclingfabrik.com](https://www.recyclingfabrik.com)
-
----
-
-### Now more detailed informations about the usage: [Wiki](https://github.com/ManuelW77/Filaman/wiki)
-
-### ESP32 Hardware Features
-- **Weight Measurement:** Using a load cell with HX711 amplifier for precise weight tracking.
-- **NFC Tag Reading/Writing:** PN532 module for reading and writing filament data to NFC tags.
-- **OLED Display:** Shows current weight, connection status (WiFi, Bambu Lab, Spoolman).
-- **WiFi Connectivity:** WiFiManager for easy network configuration.
-- **MQTT Integration:** Connects to Bambu Lab printer for AMS control.
-- **NFC-Tag NTAG213 NTAG215:** Use NTAG213, better NTAG215 because of enaught space on the Tag
-
-### Web Interface Features
-- **Real-time Updates:** WebSocket connection for live data updates.
-- **NFC Tag Management:** 
-	- Write filament data to NFC tags.
-	- uses NFC-Tag Format of [Openspool](https://github.com/spuder/OpenSpool)
-	- so you can use it with automatic Spool detection in AMS
-	- **Manufacturer Tag Support:** Automatic creation of Spoolman entries from manufacturer NFC tags ([Learn more](README_ManufacturerTags_EN.md))
-- **Bambulab AMS Integration:** 
-  - Display current AMS tray contents.
-  - Assign filaments to AMS slots.
-  - Support for external spool holder.
-- **Spoolman Integration:**
-  - List available filament spools.
-  - Filter and select filaments.
-  - Update spool weights automatically.
-  - Track NFC tag assignments.
-  - Supports Spoolman Octoprint Plugin
-
-### If you want to support my work, i would be happy to get a coffe
+**If you appreciate the foundation this project is built on, please support the original author:**
 
 <a href="https://www.buymeacoffee.com/manuelw" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 30px !important;width: 108px !important;" ></a>
 
-## Manufacturer Tags Support
+- Original project: [github.com/ManuelW77/Filaman](https://github.com/ManuelW77/Filaman)
+- Original website: [filaman.app](https://www.filaman.app)
+- Original wiki: [FilaMan Wiki](https://github.com/ManuelW77/Filaman/wiki)
+- Discord: [FilaMan Discord](https://discord.gg/my7Gvaxj2v)
 
-🎉 **Exciting News!** FilaMan now supports **Manufacturer Tags** - NFC tags that come pre-programmed directly from filament manufacturers!
+---
 
-### First Manufacturer Partner: RecyclingFabrik
+## What This Fork Adds
 
-We're thrilled to announce that [**RecyclingFabrik**](https://www.recyclingfabrik.de) will be the **first filament manufacturer** to support FilaMan by offering NFC tags in the FilaMan format on their spools!
+FilamentManager extends FilaMan with multi-backend printer support, the OpenPrintTag NFC standard, and PrintFarmer integration for centralized printer farm management.
 
-**Coming Soon:** RecyclingFabrik spools will include NFC tags that automatically integrate with your FilaMan system, eliminating manual setup and ensuring perfect compatibility.
+| Feature | FilaMan (upstream) | FilamentManager (this fork) |
+|---|---|---|
+| NFC formats | OpenSpool JSON | OpenSpool JSON + **OpenPrintTag binary TLV** |
+| Printer backends | Bambu Lab AMS (MQTT) | Bambu Lab AMS + **Moonraker/Klipper** + **PrintFarmer** |
+| Spool management | Spoolman | Spoolman + **Moonraker Spoolman proxy** |
+| Fleet management | — | **PrintFarmer heartbeat + scan webhooks** |
+| NFC tag formats | NTAG213/215 | NTAG213/215/216 |
 
-### How Manufacturer Tags Work
+All original FilaMan features (scale, display, WiFiManager, OTA, Bambu AMS, Spoolman, manufacturer tags) are preserved.
 
-When you scan a manufacturer NFC tag for the first time:
-1. **Automatic Brand Detection:** FilaMan recognizes the manufacturer and creates the brand in Spoolman
-2. **Filament Type Creation:** All material specifications are automatically added
-3. **Spool Registration:** Your specific spool is registered with proper weight and specifications
-4. **Future Fast Recognition:** Subsequent scans use fast-path detection for instant weight measurement
+## Features
 
-**For detailed technical information:** [Manufacturer Tags Documentation](README_ManufacturerTags_EN.md)
+### NFC Tag Support
 
-### Benefits for Users
-- ✅ **Zero Manual Setup** - Just scan and weigh
-- ✅ **Perfect Data Accuracy** - Manufacturer-verified specifications
-- ✅ **Instant Integration** - Seamless Spoolman compatibility
-- ✅ **Future-Proof** - Tags work with any FilaMan-compatible system
+- **OpenSpool** — JSON NDEF format (`application/json`), the community standard
+- **OpenPrintTag** — Binary TLV NDEF format (`application/vnd.openprinttag`), Prusa's standard
+- **Auto-detection** — format is detected automatically on scan
+- **Read & write** — both formats can be read from and written to NTAG213/215/216 tags
+- **Spoolman mapping** — scanned tag data maps to Spoolman spool entries; creates new entries when no match is found
 
-## OlyForge3D Fork Additions
+### Printer Backend Integrations
 
-This fork extends FilaMan with additional NFC format support, backend integrations, and a PrintFarmer companion app.
-
-### OpenPrintTag NFC Format
-
-[OpenPrintTag](https://specs.openprinttag.org/) is Prusa's binary TLV NFC standard for filament spools. This fork reads and writes OpenPrintTag tags alongside the existing OpenSpool JSON format.
-
-**Auto-detection**: When scanning a tag, the format is automatically detected:
-- `application/json` with `"protocol":"openspool"` → OpenSpool
-- `application/vnd.openprinttag` binary TLV → OpenPrintTag
-- Unknown → reported to web UI
-
-**Supported OpenPrintTag fields**: material class/type/name, brand name, primary color, print/bed temperatures, spool weights, density, UUIDs, and certifications.
-
-### Moonraker/Klipper Backend
-
-Set the active spool on a Klipper printer via Moonraker's Spoolman integration:
-- **POST** `/server/spoolman/spool_id` — sets the active spool when a tag is scanned
-- Configurable Moonraker URL and API key in the web UI Settings page
-- Moonraker's `/server/spoolman/` endpoint can also proxy Spoolman API calls, so you can set the Spoolman URL to `http://<moonraker-host>:7125/server/spoolman` if Spoolman runs behind Moonraker
+- **Bambu Lab AMS** — MQTT-based AMS slot assignment and monitoring (from upstream FilaMan)
+- **Moonraker/Klipper** — sets active spool via `POST /server/spoolman/spool_id` on scan; Moonraker's Spoolman proxy can replace direct Spoolman access
+- **PrintFarmer** — reports spool scans and device health to a PrintFarmer server for centralized farm management
 
 ### PrintFarmer Integration
 
-Report spool scans and device health to a [PrintFarmer](https://github.com/jpapiez/PrintFarmer) server:
-- **Heartbeat** — sends WiFi RSSI, NFC reader status, firmware version, free heap every 60 seconds
-- **Scan webhook** — reports each tag scan with spool ID, format, material, and brand
-- **Auto-registration** — the PrintFarmer server automatically registers the device on first heartbeat
-- Configurable server URL, API key, and associated printer ID in the Settings page
+- **Heartbeat** — WiFi RSSI, NFC reader status, firmware version, free heap reported every 60 seconds
+- **Scan webhook** — each NFC scan sends spool ID, tag format, material type, and brand
+- **Auto-registration** — the PrintFarmer server creates the device record on first heartbeat
+- **Companion page** — PrintFarmer includes a React NFC Devices page showing device status, scan history, and associated printers
 
-### Configuration
+### Spoolman Integration (from upstream)
 
-All new backend settings are in the **Settings** page (formerly "Spoolman"):
-- **Moonraker**: URL, API key, enable/disable
-- **PrintFarmer**: Server URL, API key, printer ID, enable/disable
+- List, filter, and select filament spools
+- Update spool weights automatically via scale
+- Track NFC tag assignments
+- Manufacturer tag auto-import
+- Supports Spoolman OctoPrint Plugin
 
-Settings persist in ESP32 NVS flash across reboots.
+### Hardware Features (from upstream)
 
-## Detailed Functionality
+- **Weight measurement** — HX711 load cell for precise spool weighing
+- **NFC read/write** — PN532 module via I2C
+- **OLED display** — 128×64 SSD1306 for status display
+- **WiFi** — WiFiManager captive portal for network setup
+- **OTA updates** — firmware and filesystem updates via web UI
 
-### ESP32 Functionality
-- **Control and Monitor Print Jobs:** The ESP32 communicates with the Bambu Lab printer to control and monitor print jobs.
-- **Printer Communication:** Uses MQTT for real-time communication with the printer.
-- **User Interactions:** The OLED display provides immediate feedback on the system status, including weight measurements and connection status.
+## Manufacturer Tags Support
 
-### Web Interface Functionality
-- **User Interactions:** The web interface allows users to interact with the system, select filaments, write NFC tags, and monitor AMS status.
-- **UI Elements:** Includes dropdowns for selecting manufacturers and filaments, buttons for writing NFC tags, and real-time status indicators.
+FilaMan supports **Manufacturer Tags** — NFC tags that come pre-programmed directly from filament manufacturers.
+
+### RecyclingFabrik Partnership
+
+[**RecyclingFabrik**](https://www.recyclingfabrik.com) is the first manufacturer to support FilaMan-compatible NFC tags on their spools. When scanned, these tags automatically create Spoolman entries with manufacturer-verified specifications.
+
+For technical details: [Manufacturer Tags Documentation](README_ManufacturerTags_EN.md)
 
 ## Hardware Requirements
 
@@ -238,8 +178,8 @@ You have to activate Spoolman in debug mode, because you are not able to set COR
 ### Compile by yourself
 1. **Clone the Repository:**
     ```bash
-    git clone https://github.com/ManuelW77/Filaman.git
-    cd FilaMan
+    git clone https://github.com/OlyForge3D/FilamentManager.git
+    cd FilamentManager
     ```
 2. **Install Dependencies:**
     ```bash
@@ -283,7 +223,9 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Availability
 
-The code can be tested and the application can be downloaded from the [GitHub repository](https://github.com/ManuelW77/Filaman).
+- **This fork**: [github.com/OlyForge3D/FilamentManager](https://github.com/OlyForge3D/FilamentManager)
+- **Original FilaMan**: [github.com/ManuelW77/Filaman](https://github.com/ManuelW77/Filaman)
+- **PrintFarmer**: [github.com/jpapiez/PrintFarmer](https://github.com/jpapiez/PrintFarmer)
 
-### If you want to support my work, i would be happy to get a coffe
+### Support the original FilaMan author
 <a href="https://www.buymeacoffee.com/manuelw" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 30px !important;width: 108px !important;" ></a>

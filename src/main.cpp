@@ -69,12 +69,12 @@ void setup() {
   start_scale(touchSensorConnected);
   scaleTareRequest = true;
 
-  // WDT initialisieren mit 10 Sekunden Timeout
-  bool panic = true; // Wenn true, löst ein WDT-Timeout einen System-Panik aus
+  // Initialize WDT with 10 second timeout
+  bool panic = true; // If true, WDT timeout triggers a system panic
   esp_task_wdt_init(10, panic);
 
   booting = false;
-  // Aktuellen Task (loopTask) zum Watchdog hinzufügen
+  // Add current task (loopTask) to watchdog
   esp_task_wdt_add(NULL);
 }
 
@@ -117,14 +117,14 @@ const unsigned long debounceDelay = 500; // 500 ms debounce delay
 void loop() {
   unsigned long currentMillis = millis();
 
-  // Überprüfe den Status des Touch Sensors
+  // Check touch sensor status
   if (touchSensorConnected && digitalRead(TTP223_PIN) == HIGH && currentMillis - lastButtonPress > debounceDelay) 
   {
     lastButtonPress = currentMillis;
     scaleTareRequest = true;
   }
 
-  // Überprüfe regelmäßig die WLAN-Verbindung
+  // Regularly check WiFi connection
   if (intervalElapsed(currentMillis, lastWifiCheckTime, WIFI_CHECK_INTERVAL)) 
   {
     checkWiFiConnection();
@@ -149,7 +149,7 @@ void loop() {
     sendPrintFarmerHeartbeat();
   }
 
-  // Wenn Bambu auto set Spool aktiv
+  // When Bambu auto set Spool is active
   if (bambuCredentials.autosend_enable && autoSetToBambuSpoolId > 0 && !nfcWriteInProgress) 
   {
     if (!bambuDisabled && !bambu_connected) 
@@ -192,7 +192,7 @@ void loop() {
   } 
   else 
   {
-    // Ausgabe der Waage auf Display
+    // Display weight on screen
     // Block weight display during NFC write operations
     if(pauseMainTask == 0 && !nfcWriteInProgress)
     {
@@ -210,12 +210,12 @@ void loop() {
     }
 
 
-    // Wenn Timer abgelaufen und nicht gerade ein RFID-Tag geschrieben wird
+    // When timer expired and not currently writing an RFID tag
     if (currentMillis - lastWeightReadTime >= weightReadInterval && nfcReaderState < NFC_WRITING)
     {
       lastWeightReadTime = currentMillis;
 
-      // Prüfen ob das Gewicht gleich bleibt und dann senden
+      // Check if weight remains stable then send
       if (abs(weight - lastWeight) <= 2 && weight > 5)
       {
         weightCounterToApi++;
@@ -235,7 +235,7 @@ void loop() {
     
     lastWeight = weight;
 
-    // Wenn ein Tag mit SM id erkannte wurde und der Waage Counter anspricht an SM Senden
+    // When a tag with SM id was detected and weight counter triggers, send to SM
     if (activeSpoolId != "" && weightCounterToApi > 3 && weightSend == 0 && nfcReaderState == NFC_READ_SUCCESS && tagProcessed == false && spoolmanApiState == API_IDLE) 
     {
       // set the current tag as processed to prevent it beeing processed again
