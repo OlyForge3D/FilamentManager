@@ -17,6 +17,8 @@ bool mainTaskWasPaused = 0;
 uint8_t scaleTareCounter = 0;
 bool touchSensorConnected = false;
 bool booting = true;
+unsigned long lastHeartbeat = 0;
+const unsigned long HEARTBEAT_INTERVAL = 60000; // 60 seconds
 
 // ##### SETUP #####
 void setup() {
@@ -140,6 +142,13 @@ void loop() {
     checkSpoolmanInstance();
   }
 
+  // PrintFarmer heartbeat
+  if (printFarmerEnabled && (currentMillis - lastHeartbeat >= HEARTBEAT_INTERVAL))
+  {
+    lastHeartbeat = currentMillis;
+    sendPrintFarmerHeartbeat();
+  }
+
   // Wenn Bambu auto set Spool aktiv
   if (bambuCredentials.autosend_enable && autoSetToBambuSpoolId > 0 && !nfcWriteInProgress) 
   {
@@ -252,6 +261,7 @@ void loop() {
         // Notify PrintFarmer of active spool change
         if (printFarmerEnabled) {
           updateSpoolPrintFarmer(activeSpoolId.toInt());
+          sendPrintFarmerScanEvent(activeSpoolId.toInt(), "nfc", "", "");
         }
       }
       else

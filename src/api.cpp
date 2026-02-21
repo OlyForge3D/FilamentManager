@@ -1,6 +1,7 @@
 #include "api.h"
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <WiFi.h>
 #include "commonFS.h"
 #include <Preferences.h>
 #include "debug.h"
@@ -1584,4 +1585,68 @@ String loadPrintFarmerUrl() {
     Serial.printf("PrintFarmer loaded: %s printer=%s (enabled=%d)\n",
                   printFarmerUrl.c_str(), printFarmerPrinterId.c_str(), printFarmerEnabled);
     return printFarmerUrl;
+}
+
+bool sendPrintFarmerHeartbeat() {
+    if (!printFarmerEnabled || printFarmerUrl.length() == 0) return false;
+
+    HTTPClient http;
+    String url = printFarmerUrl + "/api/nfc-devices/heartbeat";
+    http.begin(url);
+    http.addHeader("Content-Type", "application/json");
+    if (printFarmerApiKey.length() > 0) {
+        http.addHeader("Authorization", "Bearer " + printFarmerApiKey);
+    }
+
+    JsonDocument doc;
+    doc["printerId"] = printFarmerPrinterId;
+    doc["wifiRssi"] = WiFi.RSSI();
+    doc["nfcReaderOk"] = (nfcReaderState != NFC_READ_ERROR);
+    doc["ip"] = WiFi.localIP().toString();
+    doc["firmwareVersion"] = VERSION;
+    doc["freeHeap"] = ESP.getFreeHeap();
+
+    String payload;
+    serializeJson(doc, payload);
+    int httpCode = http.POST(payload);
+    http.end();
+
+    if (httpCode == 200 || httpCode == 204) {
+        Serial.println("PrintFarmer heartbeat sent");
+        return true;
+    }
+    Serial.printf("PrintFarmer heartbeat failed: HTTP %d\n", httpCode);
+    return false;
+}
+
+bool sendPrintFarmerScanEvent(int spoolId, const String& tagFormat, const String& materialType, const String& brandName) {
+    if (!printFarmerEnabled || printFarmerUrl.length() == 0) return false;
+
+    HTTPClient http;
+    String url = printFarmerUrl + "/api/nfc-devices/scan";
+    http.begin(url);
+    http.addHeader("Content-Type", "application/json");
+    if (printFarmerApiKey.length() > 0) {
+        http.addHeader("Authorization", "Bearer " + printFarmerApiKey);
+    }
+
+    JsonDocument doc;
+    doc["printerId"] = printFarmerPrinterId;
+    doc["spoolId"] = spoolId;
+    doc["tagFormat"] = tagFormat;
+    doc["materialType"] = materialType;
+    doc["brandName"] = brandName;
+
+    String payload;
+    serializeJson(doc, payload);
+    Serial.printf("PrintFarmer scan event: %s\n", payload.c_str());
+    int httpCode = http.POST(payload);
+    http.end();
+
+    if (httpCode == 200 || httpCode == 204) {
+        Serial.println("PrintFarmer scan event sent");
+        return true;
+    }
+    Serial.printf("PrintFarmer scan event failed: HTTP %d\n", httpCode);
+    return false;
 }
