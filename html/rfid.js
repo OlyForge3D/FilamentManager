@@ -101,6 +101,10 @@ function initWebSocket() {
             } else if (data.type === 'nfcTag') {
                 updateNfcStatusIndicator(data.payload);
             } else if (data.type === 'nfcData') {
+                // Pass format info for OpenPrintTag detection
+                if (data.format === 'openprinttag' && data.payload) {
+                    data.payload.format = 'openprinttag';
+                }
                 updateNfcData(data.payload);
             } else if (data.type === 'writeNfcTag') {
                 handleWriteNfcTagResponse(data.success);
@@ -586,6 +590,36 @@ function updateNfcData(data) {
         <div class="nfc-card-data" style="margin-top: 10px;">
             <p><strong>Location:</strong> ${data.location || 'N/A'}</p>
         `;
+     }
+     else if(data.format === 'openprinttag')
+     {
+        // OpenPrintTag format display
+        html = `
+        <div class="nfc-card-data" style="margin-top: 10px;">
+            <p><strong>Format:</strong> OpenPrintTag</p>
+            <p><strong>Brand:</strong> ${data.brand_name || 'N/A'}</p>
+            <p><strong>Material:</strong> ${data.material_type || 'N/A'} ${data.color_hex ? `<span style="
+                background-color: #${data.color_hex}; 
+                width: 20px; 
+                height: 20px; 
+                display: inline-block; 
+                vertical-align: middle;
+                border: 1px solid #333;
+                border-radius: 3px;
+                margin-left: 5px;
+            "></span>` : ''}</p>
+        `;
+        if (data.material_name) html += `<p><strong>Name:</strong> ${data.material_name}</p>`;
+        if (data.min_print_temp >= 0 && data.max_print_temp >= 0) {
+            html += `<p><strong>Print Temp:</strong> ${data.min_print_temp}°C - ${data.max_print_temp}°C</p>`;
+        }
+        if (data.min_bed_temp >= 0 && data.max_bed_temp >= 0) {
+            html += `<p><strong>Bed Temp:</strong> ${data.min_bed_temp}°C - ${data.max_bed_temp}°C</p>`;
+        }
+        if (data.nominal_weight_g > 0) html += `<p><strong>Weight:</strong> ${data.nominal_weight_g}g</p>`;
+        if (data.density > 0) html += `<p><strong>Density:</strong> ${data.density} g/cm³</p>`;
+        if (data.drying_temp >= 0) html += `<p><strong>Drying:</strong> ${data.drying_temp}°C / ${data.drying_time_min || '?'} min</p>`;
+        if (data.instance_uuid) html += `<p><strong>UUID:</strong> <small>${data.instance_uuid}</small></p>`;
      }
      else
      {

@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "scale.h"
 #include "nfc.h"
+#include "openprinttag.h"
 #include <time.h>
 volatile spoolmanApiStateType spoolmanApiState = API_IDLE;
 
@@ -1063,6 +1064,103 @@ bool createBrandFilament(JsonDocument& payload, String uidString) {
     
     Serial.println("SUCCESS: Brand filament created with Spool ID: " + String(spoolId));
     return true;
+}
+
+// Map OpenPrintTag data to the FilaMan JSON format expected by createBrandFilament
+// This enables automatic spool creation in Spoolman from OpenPrintTag NFC tags
+bool createSpoolFromOpenPrintTag(const OpenPrintTagData& optData, String uidString) {
+    Serial.println("=== Creating Spoolman spool from OpenPrintTag data ===");
+
+    if (!spoolmanConnected) {
+        Serial.println("Spoolman not connected, cannot create spool");
+        return false;
+    }
+
+    // Build the JSON payload in the format expected by checkVendor/checkFilament/createSpool
+    JsonDocument payload;
+
+    // Brand name → "b" key (used by checkVendor)
+    payload["b"] = optData.brandName.length() > 0 ? optData.brandName : "Unknown";
+
+    // Material type → "t" key (used by createFilament as "material")
+    if (optData.materialAbbreviation.length() > 0) {
+        payload["t"] = optData.materialAbbreviation;
+    } else {
+        payload["t"] = optMaterialTypeToString(optData.materialType);
+    }
+
+    // Material name → "cn" key (used as filament name)
+    if (optData.materialName.length() > 0) {
+        payload["cn"] = optData.materialName;
+    } else {
+        // Construct name from brand + material type
+        String name = payload["b"].as<String>() + " " + payload["t"].as<String>();
+        if (optData.hasPrimaryColor) {
+            name += " " + optColorToHexString(optData.primaryColor);
+        }
+        payload["cn"] = name;
+    }
+
+    // Color hex → "c" key
+    if (optData.hasPrimaryColor) {
+        payload["c"] = optColorToHexString(optData.primaryColor);
+    }
+
+    // Density → "de" key
+    if (optData.density > 0) {
+        payload["de"] = String(optData.density, 2);
+    }
+
+    // Filament diameter → "di" key
+    if (optData.filamentDiameter > 0) {
+        payload["di"] = String(optData.filamentDiameter, 2);
+    }
+
+    // Spool weight (empty container) → "sw" key
+    if (optData.emptyContainerWeight > 0) {
+        payload["sw"] = String((int)optData.emptyContainerWeight);
+    } else {
+        payload["sw"] = "180"; // default spool weight
+    }
+
+    // Print temperatures → "et" and "bt" keys
+    if (optData.minPrintTemp >= 0 && optData.maxPrintTemp >= 0) {
+        // Use average of min/max as the setting
+        int avgTemp = (optData.minPrintTemp + optData.maxPrintTemp) / 2;
+        payload["et"] = String(avgTemp);
+    } else if (optData.minPrintTemp >= 0) {
+        payload["et"] = String(optData.minPrintTemp);
+    }
+
+    if (optData.minBedTemp >= 0 && optData.maxBedTemp >= 0) {
+        int avgBedTemp = (optData.minBedTemp + optData.maxBedTemp) / 2;
+        payload["bt"] = String(avgBedTemp);
+    } else if (optData.minBedTemp >= 0) {
+        payload["bt"] = String(optData.minBedTemp);
+    }
+
+    // Article number → "an" key (use instance UUID or GTIN if available)
+    if (optData.gtin > 0) {
+        payload["an"] = String((unsigned long)optData.gtin);
+    } else if (optData.instanceUuid.length() > 0) {
+        payload["an"] = optData.instanceUuid.substring(0, 20); // truncate for article number
+    } else {
+        payload["an"] = "OPT-" + String(millis()); // fallback unique identifier
+    }
+
+    // Set sm_id to 0 to indicate new spool (triggers createBrandFilament flow)
+    payload["sm_id"] = "0";
+
+    Serial.println("OpenPrintTag → Spoolman mapping:");
+    String debugPayload;
+    serializeJsonPretty(payload, debugPayload);
+    Serial.println(debugPayload);
+
+    // Use existing createBrandFilament flow
+    bool result = createBrandFilament(payload, uidString);
+    payload.clear();
+
+    return result;
 }
 
 // #### Spoolman init

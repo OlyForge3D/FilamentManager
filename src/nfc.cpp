@@ -1213,12 +1213,14 @@ bool decodeNdefAndReturnJson(const byte* encodedMessage, String uidString) {
       String wsMsg = "{\"type\":\"nfcData\",\"format\":\"openprinttag\",\"payload\":" + nfcJsonData + "}";
       ws.textAll(wsMsg);
 
-      // For Spoolman integration, use the OpenSpool-compatible format
-      // This allows existing spool matching logic to work
+      // For Spoolman integration, attempt to create spool from OpenPrintTag data
       if (spoolmanConnected) {
         oledShowProgressBar(2, octoEnabled ? 5 : 4, "OpenPrintTag", optData.materialName.c_str());
-        // Attempt to find matching spool in Spoolman by material/brand/color
-        // For now, set nfcJsonData to the openprinttag JSON so the web UI can display it
+        // Create a new spool in Spoolman from the rich OpenPrintTag metadata
+        if (!createSpoolFromOpenPrintTag(optData, uidString)) {
+          Serial.println("Note: Could not auto-create Spoolman spool from OpenPrintTag");
+          // Not a fatal error — tag data is still displayed in web UI
+        }
       }
     } else {
       Serial.printf("OpenPrintTag parse error: %s\n", optData.parseError.c_str());

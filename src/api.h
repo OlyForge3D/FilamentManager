@@ -6,6 +6,7 @@
 #include "website.h"
 #include "display.h"
 #include <ArduinoJson.h>
+#include "openprinttag.h"
 typedef enum {
     API_INIT,
     API_IDLE,
@@ -47,5 +48,6 @@ bool initSpoolman(); // Neue Funktion zum Initialisieren von Spoolman
 bool updateSpoolBambuData(String payload); // Neue Funktion zum Aktualisieren der Bambu-Daten
 bool updateSpoolOcto(int spoolId); // Neue Funktion zum Aktualisieren der Octo-Daten
 bool createBrandFilament(JsonDocument& payload, String uidString);
+bool createSpoolFromOpenPrintTag(const OpenPrintTagData& optData, String uidString);
 
 #endif
