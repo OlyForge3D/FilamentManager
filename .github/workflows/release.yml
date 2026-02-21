@@ -25,7 +25,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Bump version in platformio.ini
+    - name: Compute new version
       id: get_version
       run: |
         CURRENT=$(grep '^version = ' platformio.ini | cut -d'"' -f2)
@@ -38,17 +38,53 @@ jobs:
         esac
 
         VERSION="${MAJOR}.${MINOR}.${PATCH}"
-        sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" platformio.ini
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
         echo "Bumped version: $CURRENT -> $VERSION"
 
-    - name: Commit version bump
+    - name: Generate Release Notes
+      id: release_notes
       run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add platformio.ini
-        git commit -m "chore: bump version to v${{ steps.get_version.outputs.VERSION }}"
-        git push
+        LATEST_TAG=$(git for-each-ref --sort=-creatordate --format '%(refname:short)' refs/tags | head -1)
+        VERSION=${{ steps.get_version.outputs.VERSION }}
+
+        {
+          echo "CHANGES<<EOF"
+          if [ -n "$LATEST_TAG" ]; then
+            echo "## What's Changed (since ${LATEST_TAG})"
+          else
+            echo "## Initial Release"
+          fi
+          echo ""
+
+          LOG_RANGE="${LATEST_TAG:+${LATEST_TAG}..HEAD}"
+          LOG_RANGE="${LOG_RANGE:-HEAD}"
+
+          ADDED=$(git log $LOG_RANGE --pretty=format:"%h - %s (%an)" | grep -iE '^[a-f0-9]+ - (feat|add|new)' | sed 's/^[a-f0-9]* - /- /' || true)
+          FIXED=$(git log $LOG_RANGE --pretty=format:"%h - %s (%an)" | grep -iE '^[a-f0-9]+ - fix' | sed 's/^[a-f0-9]* - /- /' || true)
+          OTHER=$(git log $LOG_RANGE --pretty=format:"%h - %s (%an)" | grep -ivE '^[a-f0-9]+ - (feat|fix|add|new|chore)' | sed 's/^[a-f0-9]* - /- /' || true)
+
+          if [ -n "$ADDED" ]; then
+            echo "### Added"
+            echo "$ADDED"
+            echo ""
+          fi
+          if [ -n "$FIXED" ]; then
+            echo "### Fixed"
+            echo "$FIXED"
+            echo ""
+          fi
+          if [ -n "$OTHER" ]; then
+            echo "### Changed"
+            echo "$OTHER"
+            echo ""
+          fi
+          echo "EOF"
+        } >> $GITHUB_OUTPUT
+
+    - name: Bump version in platformio.ini
+      run: |
+        VERSION=${{ steps.get_version.outputs.VERSION }}
+        sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" platformio.ini
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -69,18 +105,13 @@ jobs:
       run: |
         VERSION=${{ steps.get_version.outputs.VERSION }}
 
-        # Build firmware and LittleFS
         echo "Building firmware and LittleFS..."
         pio run -e esp32dev
         pio run -t buildfs
 
-        # Copy firmware binary
         cp .pio/build/esp32dev/firmware.bin .pio/build/esp32dev/upgrade_filaman_firmware_v${VERSION}.bin
-
-        # Create LittleFS binary
         cp .pio/build/esp32dev/littlefs.bin .pio/build/esp32dev/upgrade_filaman_website_v${VERSION}.bin
 
-        # Create full binary
         (cd .pio/build/esp32dev &&
         esptool.py --chip esp32 merge_bin \
           --fill-flash-size 4MB \
@@ -93,49 +124,18 @@ jobs:
           0x10000 firmware.bin \
           0x3D0000 littlefs.bin)
 
-        # Verify file sizes
         echo "File sizes:"
         (cd .pio/build/esp32dev && ls -lh *.bin)
 
-    - name: Generate Release Notes
-      id: release_notes
+    - name: Commit version bump and tag
       run: |
-        # Get the latest tag
-        LATEST_TAG=$(git for-each-ref --sort=-creatordate --format '%(refname:short)' refs/tags | head -1)
-
-        if [ -n "$LATEST_TAG" ]; then
-          echo "CHANGES<<EOF" >> $GITHUB_OUTPUT
-          echo "Changes since ${LATEST_TAG}:" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-
-          echo "### Added" >> $GITHUB_OUTPUT
-          git log ${LATEST_TAG}..HEAD --pretty=format:"%h - %s (%an)" | grep -iE '^[a-f0-9]+ - (feat|add|new)' | sed 's/^[a-f0-9]* - feat: /- /' >> $GITHUB_OUTPUT || true
-          echo "" >> $GITHUB_OUTPUT
-
-          echo "### Fixed" >> $GITHUB_OUTPUT
-          git log ${LATEST_TAG}..HEAD --pretty=format:"%h - %s (%an)" | grep -iE '^[a-f0-9]+ - fix' | sed 's/^[a-f0-9]* - fix: /- /' >> $GITHUB_OUTPUT || true
-          echo "" >> $GITHUB_OUTPUT
-
-          echo "### Changed" >> $GITHUB_OUTPUT
-          git log ${LATEST_TAG}..HEAD --pretty=format:"%h - %s (%an)" | grep -ivE '^[a-f0-9]+ - (feat|fix|add|new)' | sed 's/^[a-f0-9]* - /- /' >> $GITHUB_OUTPUT || true
-          echo "EOF" >> $GITHUB_OUTPUT
-        else
-          echo "CHANGES<<EOF" >> $GITHUB_OUTPUT
-          echo "Initial Release" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-
-          echo "### Added" >> $GITHUB_OUTPUT
-          git log --pretty=format:"%h - %s (%an)" | grep -iE '^[a-f0-9]+ - (feat|add|new)' | sed 's/^[a-f0-9]* - feat: /- /' >> $GITHUB_OUTPUT || true
-          echo "" >> $GITHUB_OUTPUT
-
-          echo "### Fixed" >> $GITHUB_OUTPUT
-          git log --pretty=format:"%h - %s (%an)" | grep -iE '^[a-f0-9]+ - fix' | sed 's/^[a-f0-9]* - fix: /- /' >> $GITHUB_OUTPUT || true
-          echo "" >> $GITHUB_OUTPUT
-
-          echo "### Changed" >> $GITHUB_OUTPUT
-          git log --pretty=format:"%h - %s (%an)" | grep -ivE '^[a-f0-9]+ - (feat|fix|add|new)' | sed 's/^[a-f0-9]* - /- /' >> $GITHUB_OUTPUT || true
-          echo "EOF" >> $GITHUB_OUTPUT
-        fi
+        VERSION=${{ steps.get_version.outputs.VERSION }}
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add platformio.ini
+        git commit -m "chore: bump version to v${VERSION}"
+        git tag "v${VERSION}"
+        git push origin main "v${VERSION}"
 
     - name: Create GitHub Release
       env:
