@@ -61,7 +61,11 @@ FilamentManager supports **Manufacturer Tags** — NFC tags that come pre-progra
 
 [**RecyclingFabrik**](https://www.recyclingfabrik.com) is the first manufacturer to support FilamentManager-compatible NFC tags on their spools. When scanned, these tags automatically create Spoolman entries with manufacturer-verified specifications.
 
-For technical details: [Manufacturer Tags Documentation](README_ManufacturerTags_EN.md)
+Supported manufacturer-tag types (brief):
+- Pre-programmed **RecyclingFabrik** tags
+- Generic manufacturer tags that follow the compact JSON schema (`b`, `an`, `t`, `c`, `cn`, `et`, `bt`, `di`, `de`, `sw`, optional `mc`, `mcd`, `u`)
+
+For the full format, examples, and implementation details: [Manufacturer Tags Documentation](manufacturer_tags.md)
 
 ## Hardware Requirements
 
