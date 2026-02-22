@@ -54,6 +54,9 @@ void setup() {
   // Bambu MQTT
   setupMqtt();
 
+  // Load pin configuration from NVS (or use board defaults)
+  loadPinConfig();
+
   // NFC Reader
   startNfc();
 

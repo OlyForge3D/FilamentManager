@@ -1,0 +1,130 @@
+<!-- head --><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FilaMan - Filament Management Tool</title>
+    <link rel="icon" type="image/png" href="/favicon.ico">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        fetch('/api/version')
+            .then(response => response.json())
+            .then(data => {
+                const versionSpan = document.querySelector('.version');
+                if (versionSpan) {
+                    versionSpan.textContent = 'v' + data.version;
+                }
+            })
+            .catch(error => console.error('Error fetching version:', error));
+    </script>
+</head>
+<body>
+    <div class="navbar">
+        <div style="display: flex; align-items: center; gap: 2rem;">
+            <img src="/logo.png" alt="FilaMan Logo" class="logo">
+            <div class="logo-text">
+                <h1>FilaMan<span class="version"></span></h1>
+                <h4>Filament Management Tool</h4>
+            </div>
+        </div>
+        <nav style="display: flex; gap: 1rem;">
+            <a href="/">Start</a>
+            <a href="/waage">Scale</a>
+            <a href="/spoolman">Settings</a>
+            <a href="/hardware">Hardware</a>
+            <a href="/about">About</a>
+            <a href="/upgrade">Upgrade</a>
+        </nav>
+        <div class="status-container">
+            <div class="status-item">
+                <span class="status-dot" id="bambuDot"></span>B
+            </div>
+            <div class="status-item">
+                <span class="status-dot" id="spoolmanDot"></span>S
+            </div>
+            <div class="ram-status" id="ramStatus"></div>
+        </div>
+    </div>
+
+<!-- head -->
+
+    <script>
+        let pinDefaults = {};
+
+        window.onload = function() {
+            fetch('/api/v1/pins')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('boardName').textContent = data.board || 'Unknown';
+                    pinDefaults = data.defaults || {};
+
+                    const ids = ['sck','miso','mosi','ss','irq','reset'];
+                    ids.forEach(id => {
+                        document.getElementById('pin_' + id).value = data.current[id];
+                        document.getElementById('default_' + id).textContent = data.defaults[id];
+                    });
+                })
+                .catch(e => {
+                    document.getElementById('statusMessage').innerText = 'Error loading pin config: ' + e.message;
+                });
+        };
+
+        function savePins() {
+            const ids = ['sck','miso','mosi','ss','irq','reset'];
+            const params = ids.map(id => id + '=' + document.getElementById('pin_' + id).value).join('&');
+
+            fetch('/api/v1/pins/update?' + params)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('statusMessage').innerText = 'Pins saved! Reboot to apply new pin mapping.';
+                    } else {
+                        document.getElementById('statusMessage').innerText = 'Error: ' + (data.error || 'Unknown error');
+                    }
+                })
+                .catch(e => {
+                    document.getElementById('statusMessage').innerText = 'Error saving pins: ' + e.message;
+                });
+        }
+
+        function resetDefaults() {
+            const ids = ['sck','miso','mosi','ss','irq','reset'];
+            ids.forEach(id => {
+                if (pinDefaults[id] !== undefined) {
+                    document.getElementById('pin_' + id).value = pinDefaults[id];
+                }
+            });
+        }
+    </script>
+
+    <div class="content">
+        <h1>Hardware / Pin Mapping</h1>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Board: <span id="boardName">—</span></h5>
+                <p style="font-size: 0.85em; color: #888;">
+                    Configure the GPIO pins used to connect the PN532 NFC reader (SPI mode).
+                    After saving, reboot the device for changes to take effect.
+                </p>
+
+                <table style="width:100%; max-width:400px; border-collapse:collapse;">
+                    <tr><th style="text-align:left;">Signal</th><th style="text-align:left;">GPIO</th><th style="text-align:left;">Default</th></tr>
+                    <tr><td>SCK</td><td><input type="number" id="pin_sck" min="0" max="48" style="width:60px;"></td><td id="default_sck">—</td></tr>
+                    <tr><td>MISO</td><td><input type="number" id="pin_miso" min="0" max="48" style="width:60px;"></td><td id="default_miso">—</td></tr>
+                    <tr><td>MOSI</td><td><input type="number" id="pin_mosi" min="0" max="48" style="width:60px;"></td><td id="default_mosi">—</td></tr>
+                    <tr><td>SS / CS</td><td><input type="number" id="pin_ss" min="0" max="48" style="width:60px;"></td><td id="default_ss">—</td></tr>
+                    <tr><td>IRQ</td><td><input type="number" id="pin_irq" min="0" max="48" style="width:60px;"></td><td id="default_irq">—</td></tr>
+                    <tr><td>RESET</td><td><input type="number" id="pin_reset" min="0" max="48" style="width:60px;"></td><td id="default_reset">—</td></tr>
+                </table>
+
+                <div style="margin-top: 1rem;">
+                    <button onclick="savePins()">Save Pin Mapping</button>
+                    <button onclick="resetDefaults()" style="background-color: #666;">Reset to Defaults</button>
+                </div>
+                <p id="statusMessage"></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

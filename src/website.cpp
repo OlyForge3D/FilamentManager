@@ -480,6 +480,57 @@ void setupWebserver(AsyncWebServer &server) {
         request->send(200, "application/json", jsonResponse);
     });
 
+    // ── GET /api/v1/pins ──
+    server.on("/api/v1/pins", HTTP_GET, [](AsyncWebServerRequest *request){
+        JsonDocument doc;
+        doc["board"] = BOARD_NAME;
+        doc["current"]["sck"]   = pn532Pins.sck;
+        doc["current"]["miso"]  = pn532Pins.miso;
+        doc["current"]["mosi"]  = pn532Pins.mosi;
+        doc["current"]["ss"]    = pn532Pins.ss;
+        doc["current"]["irq"]   = pn532Pins.irq;
+        doc["current"]["reset"] = pn532Pins.reset;
+        doc["defaults"]["sck"]   = (uint8_t)DEFAULT_PN532_SCK;
+        doc["defaults"]["miso"]  = (uint8_t)DEFAULT_PN532_MISO;
+        doc["defaults"]["mosi"]  = (uint8_t)DEFAULT_PN532_MOSI;
+        doc["defaults"]["ss"]    = (uint8_t)DEFAULT_PN532_SS;
+        doc["defaults"]["irq"]   = (uint8_t)DEFAULT_PN532_IRQ;
+        doc["defaults"]["reset"] = (uint8_t)DEFAULT_PN532_RESET;
+        String jsonResponse;
+        serializeJson(doc, jsonResponse);
+        request->send(200, "application/json", jsonResponse);
+    });
+
+    // ── PUT /api/v1/pins (via GET with query params for simplicity) ──
+    server.on("/api/v1/pins/update", HTTP_GET, [](AsyncWebServerRequest *request){
+        if (!request->hasParam("sck") || !request->hasParam("miso") ||
+            !request->hasParam("mosi") || !request->hasParam("ss") ||
+            !request->hasParam("irq") || !request->hasParam("reset")) {
+            request->send(400, "application/json", "{\"success\":false,\"error\":\"Missing pin parameters\"}");
+            return;
+        }
+        Pn532Pins newPins;
+        newPins.sck   = request->getParam("sck")->value().toInt();
+        newPins.miso  = request->getParam("miso")->value().toInt();
+        newPins.mosi  = request->getParam("mosi")->value().toInt();
+        newPins.ss    = request->getParam("ss")->value().toInt();
+        newPins.irq   = request->getParam("irq")->value().toInt();
+        newPins.reset = request->getParam("reset")->value().toInt();
+
+        if (!savePinConfig(newPins)) {
+            request->send(400, "application/json", "{\"success\":false,\"error\":\"Validation failed – all pins must be unique\"}");
+            return;
+        }
+        request->send(200, "application/json", "{\"success\":true,\"message\":\"Pins saved. Reboot to apply.\"}");
+    });
+
+    // ── Hardware / Pin Mapping page ──
+    server.on("/hardware", HTTP_GET, [](AsyncWebServerRequest *request){
+        Serial.println("Request for /hardware received");
+        String html = loadHtmlWithHeader("/hardware.html");
+        request->send(200, "text/html", html);
+    });
+
     // Error handling for pages not found
     server.onNotFound([](AsyncWebServerRequest *request){
         Serial.print("404 - Not found: ");

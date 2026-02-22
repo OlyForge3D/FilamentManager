@@ -12,7 +12,12 @@
 #include "openprinttag.h"
 
 //Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
-Adafruit_PN532 nfc(PN532_IRQ, PN532_RESET);
+// PN532 in software-SPI mode – initialised in startNfc() with runtime pins
+Adafruit_PN532 *pNfc = nullptr;
+// Convenience reference set after allocation (avoids rewriting every call site)
+// MUST NOT be used before startNfc().
+static Adafruit_PN532 *nfcPtr() { return pNfc; }
+#define nfc (*pNfc)
 
 TaskHandle_t RfidReaderTask;
 
@@ -2239,6 +2244,12 @@ void scanRfidTask(void * parameter) {
 
 void startNfc() {
   oledShowProgressBar(5, 7, DISPLAY_BOOT_TEXT, "NFC init");
+
+  // Allocate PN532 in software-SPI mode using the configured pins
+  if (pNfc) { delete pNfc; pNfc = nullptr; }
+  pNfc = new Adafruit_PN532(pn532Pins.sck, pn532Pins.miso,
+                             pn532Pins.mosi, pn532Pins.ss);
+
   nfc.begin();                                           // Start communication with RFID reader
   delay(1000);
   unsigned long versiondata = nfc.getFirmwareVersion();  // Read firmware version number
