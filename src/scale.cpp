@@ -22,7 +22,7 @@ float applyLowPassFilter(float newValue) { return 0.0f; }
 int16_t processWeightReading(float rawWeight) { return 0; }
 int16_t getFilteredDisplayWeight() { return 0; }
 uint8_t setAutoTare(bool autoTareValue) { return 1; }
-uint8_t start_scale(bool touchSensorConnected) { return 1; }
+void start_scale(bool touchSensorConnected) {}
 uint8_t calibrate_scale() { return 1; }
 uint8_t tareScale() { return 1; }
 
