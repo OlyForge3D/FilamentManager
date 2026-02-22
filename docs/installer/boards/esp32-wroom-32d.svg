@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 200" role="img" aria-labelledby="title desc">
+  <title id="title">ESP32-WROOM-32D board</title>
+  <desc id="desc">Illustration of an ESP32-WROOM-32D development board.</desc>
+  <rect width="360" height="200" fill="#0f1a2f"/>
+  <rect x="76" y="24" width="208" height="152" rx="10" fill="#1d774f" stroke="#2ca870" stroke-width="2"/>
+  <rect x="116" y="34" width="128" height="44" rx="6" fill="#b9bdc5"/>
+  <rect x="124" y="42" width="112" height="28" rx="4" fill="#5c6068"/>
+  <rect x="166" y="86" width="28" height="36" rx="3" fill="#2b2f38"/>
+  <rect x="156" y="126" width="48" height="14" rx="2" fill="#323741"/>
+  <g fill="#d8dbdf">
+    <rect x="68" y="36" width="8" height="8"/><rect x="68" y="52" width="8" height="8"/><rect x="68" y="68" width="8" height="8"/>
+    <rect x="68" y="84" width="8" height="8"/><rect x="68" y="100" width="8" height="8"/><rect x="68" y="116" width="8" height="8"/>
+    <rect x="68" y="132" width="8" height="8"/><rect x="68" y="148" width="8" height="8"/>
+    <rect x="284" y="36" width="8" height="8"/><rect x="284" y="52" width="8" height="8"/><rect x="284" y="68" width="8" height="8"/>
+    <rect x="284" y="84" width="8" height="8"/><rect x="284" y="100" width="8" height="8"/><rect x="284" y="116" width="8" height="8"/>
+    <rect x="284" y="132" width="8" height="8"/><rect x="284" y="148" width="8" height="8"/>
+  </g>
+  <text x="180" y="188" text-anchor="middle" fill="#d9dbe1" font-family="Arial, sans-serif" font-size="18">ESP32-WROOM-32D</text>
+</svg>

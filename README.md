@@ -3,34 +3,15 @@
 > **An ESP32 NFC filament management system for 3D printing.**
 > Read and write NFC spool tags, track filament usage, and integrate with Spoolman, Moonraker/Klipper, Bambu Lab AMS, and [PrintFarmer](https://github.com/jpapiez/PrintFarmer).
 
-## Credits & Origin
+## Attribution
 
-This project is a fork of [**FilaMan**](https://github.com/ManuelW77/Filaman) by [ManuelW77](https://github.com/ManuelW77). FilaMan provides the ESP32 + PN532 hardware platform, WiFiManager captive portal, Spoolman integration, Bambu Lab AMS MQTT support, optional HX711 scale, OLED display, OTA updates, and the full web UI that this project builds upon.
+FilamentManager is derived from [FilaMan](https://github.com/ManuelW77/Filaman) by Manuel Weiser.
 
-**If you appreciate the foundation this project is built on, please support the original author:**
+## What FilamentManager Adds
 
-<a href="https://www.buymeacoffee.com/manuelw" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 30px !important;width: 108px !important;" ></a>
-
-- Original project: [github.com/ManuelW77/Filaman](https://github.com/ManuelW77/Filaman)
-- Original website: [filaman.app](https://www.filaman.app)
-- Original wiki: [FilaMan Wiki](https://github.com/ManuelW77/Filaman/wiki)
-- Discord: [FilaMan Discord](https://discord.gg/my7Gvaxj2v)
-
----
-
-## What This Fork Adds
-
-FilamentManager extends FilaMan with multi-backend printer support, the OpenPrintTag NFC standard, and PrintFarmer integration for centralized printer farm management.
-
-| Feature | FilaMan (upstream) | FilamentManager (this fork) |
-|---|---|---|
-| NFC formats | OpenSpool JSON | OpenSpool JSON + **OpenPrintTag binary TLV** |
-| Printer backends | Bambu Lab AMS (MQTT) | Bambu Lab AMS + **Moonraker/Klipper** + **PrintFarmer** |
-| Spool management | Spoolman | Spoolman + **Moonraker Spoolman proxy** |
-| Fleet management | — | **PrintFarmer heartbeat + scan webhooks** |
-| NFC tag formats | NTAG213/215 | NTAG213/215/216 |
-
-All original FilaMan features (scale, display, WiFiManager, OTA, Bambu AMS, Spoolman, manufacturer tags) are preserved.
+- OpenPrintTag binary TLV support in addition to OpenSpool JSON
+- Multi-backend printer integrations (Moonraker/Klipper and PrintFarmer)
+- Fleet management hooks (heartbeat + scan webhooks) for PrintFarmer
 
 ## Features
 
@@ -44,7 +25,7 @@ All original FilaMan features (scale, display, WiFiManager, OTA, Bambu AMS, Spoo
 
 ### Printer Backend Integrations
 
-- **Bambu Lab AMS** — MQTT-based AMS slot assignment and monitoring (from upstream FilaMan)
+- **Bambu Lab AMS** — MQTT-based AMS slot assignment and monitoring
 - **Moonraker/Klipper** — sets active spool via `POST /server/spoolman/spool_id` on scan; Moonraker's Spoolman proxy can replace direct Spoolman access
 - **PrintFarmer** — reports spool scans and device health to a PrintFarmer server for centralized farm management
 
@@ -55,7 +36,7 @@ All original FilaMan features (scale, display, WiFiManager, OTA, Bambu AMS, Spoo
 - **Auto-registration** — the PrintFarmer server creates the device record on first heartbeat
 - **Companion page** — PrintFarmer includes a React NFC Devices page showing device status, scan history, and associated printers
 
-### Spoolman Integration (from upstream)
+### Spoolman Integration
 
 - List, filter, and select filament spools
 - Update spool weights automatically via scale
@@ -63,67 +44,63 @@ All original FilaMan features (scale, display, WiFiManager, OTA, Bambu AMS, Spoo
 - Manufacturer tag auto-import
 - Supports Spoolman OctoPrint Plugin
 
-### Hardware Features (from upstream)
+### Hardware Features
 
-- **Weight measurement** — HX711 load cell for precise spool weighing
-- **NFC read/write** — PN532 module via I2C
-- **OLED display** — 128×64 SSD1306 for status display
+- **NFC read/write** — PN532 module via software SPI
 - **WiFi** — WiFiManager captive portal for network setup
 - **OTA updates** — firmware and filesystem updates via web UI
+- **Optional peripherals** — weight measurement (HX711), OLED display (SSD1306), touch tare button — see [Optional Features](OPTIONAL_FEATURES.md)
 
 ## Manufacturer Tags Support
 
-FilaMan supports **Manufacturer Tags** — NFC tags that come pre-programmed directly from filament manufacturers.
+FilamentManager supports **Manufacturer Tags** — NFC tags that come pre-programmed directly from filament manufacturers.
 
 ### RecyclingFabrik Partnership
 
-[**RecyclingFabrik**](https://www.recyclingfabrik.com) is the first manufacturer to support FilaMan-compatible NFC tags on their spools. When scanned, these tags automatically create Spoolman entries with manufacturer-verified specifications.
+[**RecyclingFabrik**](https://www.recyclingfabrik.com) is the first manufacturer to support FilamentManager-compatible NFC tags on their spools. When scanned, these tags automatically create Spoolman entries with manufacturer-verified specifications.
 
-For technical details: [Manufacturer Tags Documentation](README_ManufacturerTags_EN.md)
+Supported manufacturer-tag types (brief):
+- Pre-programmed **RecyclingFabrik** tags
+- Generic manufacturer tags that follow the compact JSON schema (`b`, `an`, `t`, `c`, `cn`, `et`, `bt`, `di`, `de`, `sw`, optional `mc`, `mcd`, `u`)
+
+For the full format, examples, and implementation details: [Manufacturer Tags Documentation](manufacturer_tags.md)
 
 ## Hardware Requirements
 
-### Components (Affiliate Links)
-- **ESP32 Development Board:** Any ESP32 variant.
+### Core Components (Affiliate Links)
+- **ESP32 Development Board** — Any ESP32 variant (WROOM-32D, C3, C6)
 [Amazon Link](https://amzn.to/3FHea6D)
-- **HX711 5kg Load Cell Amplifier:** For weight measurement.
-[Amazon Link](https://amzn.to/4ja1KTe)
-- **OLED 0.96 Zoll I2C white/yellow Display:** 128x64 SSD1306.
-[Amazon Link](https://amzn.to/445aaa9)
-- **PN532 NFC NXP RFID-Modul V3:** For NFC tag operations.
+- **PN532 NFC Module** — V3 with SPI support
 [Amazon Link](https://amzn.eu/d/gy9vaBX)
-- **NFC Tags NTAG213 NTAG215:** RFID Tag
+- **NFC Tags** — NTAG213, NTAG215, or NTAG216
 [Amazon Link](https://amzn.to/3E071xO)
-- **TTP223 Touch Sensor (optional):** For reTARE per Button/Touch
-[Amazon Link](https://amzn.to/4hTChMK)
+
+For optional hardware (scale, OLED display, touch sensor), see [Optional Features](OPTIONAL_FEATURES.md).
 
 
-### Pin Configuration
-| Component          | ESP32 Pin |
-|-------------------|-----------|
-| HX711 DOUT        | 16        |
-| HX711 SCK         | 17        |
-| OLED SDA          | 21        |
-| OLED SCL          | 22        |
-| PN532 IRQ         | 32        |
-| PN532 RESET       | 33        |
-| PN532 SDA         | 21        |
-| PN532 SCL         | 22        |
-| TTP223 I/O        | 25        |
+### Pin Configuration (PN532)
 
-**!! Make sure that the DIP switches on the PN532 are set to I2C**  
-**Use the 3V pin from the ESP for the touch sensor**
+Default PN532 wiring uses **software SPI** (bit-banged GPIO) and varies by firmware target. Any GPIO pin can be used — defaults can be changed via the Hardware page without reflashing.
 
-![Wiring](./img/Schaltplan.png)
+#### Power Connections (all boards)
 
-![myWiring](./img/IMG_2589.jpeg)
-![myWiring](./img/IMG_2590.jpeg)
+| ESP32 | PN532 |
+|:---:|:---:|
+| 3.3V | VCC |
+| GND | GND |
 
-*The load cell is connected to most HX711 modules as follows:  
-E+ red  
-E- black  
-A- white  
-A+ green*
+#### SPI Signal Connections
+
+| Firmware Target | SCK | MISO | MOSI | SS | IRQ | RESET |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| ESP32-WROOM-32D | 18 | 19 | 23 | 5 | 4 | 27 |
+| ESP32-C3-Mini | 4 | 5 | 6 | 7 | 10 | 3 |
+| ESP32-C3-SuperMini | 4 | 5 | 6 | 7 | 10 | 3 |
+| ESP32-C6-DevKit-1 | 6 | 2 | 7 | 18 | 19 | 20 |
+
+**Important:** Set the PN532 DIP switches to SPI mode.
+
+For optional hardware pin configurations (scale, display, touch sensor), see [Optional Features](OPTIONAL_FEATURES.md).
 
 ## Software Dependencies
 
@@ -133,21 +110,17 @@ A+ green*
 - `ArduinoJson`: JSON parsing and creation
 - `PubSubClient`: MQTT communication
 - `Adafruit_PN532`: NFC functionality
-- `Adafruit_SSD1306`: OLED display control
-- `HX711`: Load cell communication
 
 ### Installation
 
 ## Prerequisites
 - **Software:**
-  - [PlatformIO](https://platformio.org/) in VS Code
+  - [PlatformIO](https://platformio.org/) in VS Code (for building from source)
   - [Spoolman](https://github.com/Donkie/Spoolman) instance
 - **Hardware:**
   - ESP32 Development Board
-  - HX711 Load Cell Amplifier
-  - Load Cell (weight sensor)
-  - OLED Display (128x64 SSD1306)
   - PN532 NFC Module
+  - NFC tags (NTAG213/215/216)
   - Connecting wires
 
 ## Important Note
@@ -164,16 +137,16 @@ You have to activate Spoolman in debug mode, because you are not able to set COR
 
 ## Step-by-Step Installation
 ### Easy Installation
-1. **Go to [FilaMan Installer](https://www.filaman.app/installer.html)**
+1. **Go to [FilamentManager Web Installer](https://olyforge3d.github.io/FilamentManager/installer/)**
 
 2. **Plug you device in and push Connect button**
 
 3. **Select your Device Port and push Intall**
 
 4. **Initial Setup:**
-    - Connect to the "FilaMan" WiFi access point.
+    - Connect to the device WiFi access point (default SSID: "FilaMan").
     - Configure WiFi settings through the captive portal.
-    - Access the web interface at `http://filaman.local` or the IP address.
+    - Access the web interface at `http://filaman.local` (default hostname) or the IP address.
 
 ### Compile by yourself
 1. **Clone the Repository:**
@@ -190,9 +163,9 @@ You have to activate Spoolman in debug mode, because you are not able to set COR
     pio run --target upload
     ```
 4. **Initial Setup:**
-    - Connect to the "FilaMan" WiFi access point.
+    - Connect to the device WiFi access point (default SSID: "FilaMan").
     - Configure WiFi settings through the captive portal.
-    - Access the web interface at `http://filaman.local` or the IP address.
+    - Access the web interface at `http://filaman.local` (default hostname) or the IP address.
 
 ## Documentation
 
@@ -207,7 +180,7 @@ You have to activate Spoolman in debug mode, because you are not able to set COR
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE.txt](LICENSE.txt) file for details.
 
 ## Materials
 
@@ -223,9 +196,5 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Availability
 
-- **This fork**: [github.com/OlyForge3D/FilamentManager](https://github.com/OlyForge3D/FilamentManager)
-- **Original FilaMan**: [github.com/ManuelW77/Filaman](https://github.com/ManuelW77/Filaman)
+- **FilamentManager**: [github.com/OlyForge3D/FilamentManager](https://github.com/OlyForge3D/FilamentManager)
 - **PrintFarmer**: [github.com/jpapiez/PrintFarmer](https://github.com/jpapiez/PrintFarmer)
-
-### Support the original FilaMan author
-<a href="https://www.buymeacoffee.com/manuelw" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 30px !important;width: 108px !important;" ></a>

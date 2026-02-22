@@ -95,6 +95,38 @@ header h1 {
     color: #ffb3bf;
 }
 
+.board-preview {
+    margin-top: 0.9rem;
+    border: 1px solid #2a466b;
+    border-radius: 10px;
+    padding: 0.75rem;
+    background: #13233f;
+}
+
+.board-preview-title {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+    text-align: left;
+}
+
+.board-preview-image {
+    display: block;
+    width: 100%;
+    max-width: 340px;
+    margin: 0 auto;
+    border-radius: 8px;
+    border: 1px solid #2a466b;
+    background: #0f1a2f;
+}
+
+.board-preview-caption {
+    margin-top: 0.55rem;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    text-align: left;
+}
+
 .install-button-wrapper {
     margin: 1.25rem 0;
 }

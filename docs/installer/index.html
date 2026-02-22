@@ -24,6 +24,14 @@
                     <p id="experimental-support-note" class="experimental-note" hidden>
                         ESP32-C6 support is currently experimental.
                     </p>
+                    <p id="lite-support-note" class="experimental-note" hidden>
+                        <strong>Lite</strong> variants exclude scale and OLED display support (NFC-only).
+                    </p>
+                </div>
+                <div id="board-preview" class="board-preview" hidden>
+                    <p class="board-preview-title">Selected controller preview</p>
+                    <img id="board-preview-image" class="board-preview-image" alt="">
+                    <p id="board-preview-caption" class="board-preview-caption"></p>
                 </div>
                 <div class="install-button-wrapper">
                     <esp-web-install-button id="install-button">
@@ -61,32 +69,56 @@
     <script>
         const REPO = "OlyForge3D/FilamentManager";
         let currentManifestUrl = null;
+        const BOARD_PREVIEWS = {
+            "esp32-wroom-32d": {
+                image: "boards/esp32-wroom-32d.svg",
+                alt: "ESP32-WROOM-32D dev board illustration",
+                caption: "ESP32-WROOM-32D: common 38-pin ESP32 DevKit style board."
+            },
+            "esp32-c3-mini": {
+                image: "boards/esp32-c3-mini.svg",
+                alt: "ESP32-C3-Mini dev board illustration",
+                caption: "ESP32-C3-Mini: compact RISC-V board, often labeled C3-DevKitM-1."
+            },
+            "esp32-c3-supermini": {
+                image: "boards/esp32-c3-supermini.svg",
+                alt: "ESP32-C3-SuperMini board illustration",
+                caption: "ESP32-C3-SuperMini: very small C3 board with dual-side pin headers."
+            },
+            "esp32-c6-devkit": {
+                image: "boards/esp32-c6-devkit.svg",
+                alt: "ESP32-C6-DevKit-1 board illustration",
+                caption: "ESP32-C6-DevKit-1: Wi-Fi 6 / BLE / 802.15.4 capable board (experimental firmware support)."
+            }
+        };
 
         function parseFirmwareTarget(assetName) {
             const name = assetName.toLowerCase();
             const isExperimental = name.includes("experimental");
+            const isLite = name.includes("-lite");
             const experimentalSuffix = isExperimental ? " (Experimental)" : "";
+            const liteSuffix = isLite ? " Lite" : "";
 
             if (name.includes("esp32-c3-supermini")) {
-                return { label: "ESP32-C3-SuperMini", chipFamily: "ESP32-C3" };
+                return { label: `ESP32-C3-SuperMini${liteSuffix}`, chipFamily: "ESP32-C3", key: "esp32-c3-supermini" };
             }
             if (name.includes("esp32-c3-mini")) {
-                return { label: "ESP32-C3-Mini", chipFamily: "ESP32-C3" };
+                return { label: `ESP32-C3-Mini${liteSuffix}`, chipFamily: "ESP32-C3", key: "esp32-c3-mini" };
             }
             if (name.includes("esp32-c6-devkit")) {
-                return { label: `ESP32-C6-DevKit-1${experimentalSuffix}`, chipFamily: "ESP32-C6" };
+                return { label: `ESP32-C6-DevKit-1${liteSuffix}${experimentalSuffix}`, chipFamily: "ESP32-C6", key: "esp32-c6-devkit" };
             }
             if (name.includes("esp32-wroom-32d")) {
-                return { label: "ESP32-WROOM-32D", chipFamily: "ESP32" };
+                return { label: `ESP32-WROOM-32D${liteSuffix}`, chipFamily: "ESP32", key: "esp32-wroom-32d" };
             }
             if (name.includes("c6")) {
-                return { label: `ESP32-C6${experimentalSuffix}`, chipFamily: "ESP32-C6" };
+                return { label: `ESP32-C6${liteSuffix}${experimentalSuffix}`, chipFamily: "ESP32-C6", key: "esp32-c6-devkit" };
             }
             if (name.includes("c3")) {
-                return { label: "ESP32-C3", chipFamily: "ESP32-C3" };
+                return { label: `ESP32-C3${liteSuffix}`, chipFamily: "ESP32-C3", key: "esp32-c3-mini" };
             }
 
-            return { label: "ESP32", chipFamily: "ESP32" };
+            return { label: `ESP32${liteSuffix}`, chipFamily: "ESP32", key: "esp32-wroom-32d" };
         }
 
         function setManifest(installButton, version, firmware) {
@@ -112,14 +144,92 @@
             installButton.manifest = currentManifestUrl;
         }
 
-        async function loadLatestRelease() {
+        function updateBoardPreview(firmware) {
+            const boardPreview = document.getElementById("board-preview");
+            const boardPreviewImage = document.getElementById("board-preview-image");
+            const boardPreviewCaption = document.getElementById("board-preview-caption");
+            const preview = BOARD_PREVIEWS[firmware.key] || BOARD_PREVIEWS["esp32-wroom-32d"];
+
+            boardPreviewImage.src = preview.image;
+            boardPreviewImage.alt = preview.alt;
+            boardPreviewCaption.textContent = preview.caption;
+            boardPreview.hidden = false;
+        }
+
+        function applyFirmwareOptions(version, firmwareOptions, sourceNote = "") {
             const versionInfo = document.getElementById("version-info");
             const installButton = document.getElementById("install-button");
             const firmwareSelect = document.getElementById("firmware-select");
             const firmwareSelectWrapper = document.getElementById("firmware-select-wrapper");
             const experimentalSupportNote = document.getElementById("experimental-support-note");
 
+            versionInfo.textContent =
+                `Latest version: ${version} (${firmwareOptions.length} firmware build${firmwareOptions.length === 1 ? "" : "s"})${sourceNote}`;
+
+            firmwareSelect.innerHTML = "";
+            firmwareOptions.forEach((firmware, index) => {
+                const option = document.createElement("option");
+                option.value = String(index);
+                option.textContent = `${firmware.label} — ${firmware.name}`;
+                firmwareSelect.appendChild(option);
+            });
+
+            firmwareSelectWrapper.hidden = firmwareOptions.length <= 1;
+            experimentalSupportNote.hidden = !firmwareOptions.some(f => f.experimental);
+            const liteSupportNote = document.getElementById("lite-support-note");
+            liteSupportNote.hidden = !firmwareOptions.some(f => f.name.toLowerCase().includes("-lite"));
+
+            setManifest(installButton, version, firmwareOptions[0]);
+            updateBoardPreview(firmwareOptions[0]);
+
+            firmwareSelect.onchange = () => {
+                const selected = firmwareOptions[Number(firmwareSelect.value)];
+                if (selected) {
+                    setManifest(installButton, version, selected);
+                    updateBoardPreview(selected);
+                }
+            };
+        }
+
+        async function loadMirroredFirmware() {
+            const res = await fetch("firmware/latest/index.json", { cache: "no-store" });
+            if (!res.ok) return null;
+
+            const index = await res.json();
+            if (!index || !Array.isArray(index.assets)) return null;
+
+            const firmwareOptions = index.assets
+                .filter(name => name.startsWith("filaman_full_") && name.endsWith(".bin"))
+                .map(name => {
+                    const target = parseFirmwareTarget(name);
+                    return {
+                        name,
+                        url: `firmware/latest/${name}`,
+                        label: target.label,
+                        chipFamily: target.chipFamily,
+                        key: target.key,
+                        experimental: name.toLowerCase().includes("experimental")
+                    };
+                });
+
+            if (firmwareOptions.length === 0) return null;
+            return { version: index.version || "latest", firmwareOptions };
+        }
+
+        async function loadLatestRelease() {
+            const versionInfo = document.getElementById("version-info");
+
             try {
+                try {
+                    const mirrored = await loadMirroredFirmware();
+                    if (mirrored) {
+                        applyFirmwareOptions(mirrored.version, mirrored.firmwareOptions, " · served from installer mirror");
+                        return;
+                    }
+                } catch (mirrorErr) {
+                    console.warn("Installer mirror unavailable, falling back to GitHub releases.", mirrorErr);
+                }
+
                 const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
                 if (!res.ok) throw new Error(`GitHub API returned ${res.status}`);
                 const release = await res.json();
@@ -136,36 +246,11 @@
                         url: asset.browser_download_url,
                         label: target.label,
                         chipFamily: target.chipFamily,
+                        key: target.key,
                         experimental: asset.name.toLowerCase().includes("experimental")
                     };
                 });
-
-                versionInfo.textContent =
-                    `Latest version: ${release.tag_name} (${firmwareOptions.length} firmware build${firmwareOptions.length === 1 ? "" : "s"})`;
-
-                firmwareSelect.innerHTML = "";
-                firmwareOptions.forEach((firmware, index) => {
-                    const option = document.createElement("option");
-                    option.value = String(index);
-                    option.textContent = `${firmware.label} — ${firmware.name}`;
-                    firmwareSelect.appendChild(option);
-                });
-
-                if (firmwareOptions.length > 1) {
-                    firmwareSelectWrapper.hidden = false;
-                } else {
-                    firmwareSelectWrapper.hidden = true;
-                }
-                experimentalSupportNote.hidden = !firmwareOptions.some(f => f.experimental);
-
-                setManifest(installButton, release.tag_name, firmwareOptions[0]);
-
-                firmwareSelect.onchange = () => {
-                    const selected = firmwareOptions[Number(firmwareSelect.value)];
-                    if (selected) {
-                        setManifest(installButton, release.tag_name, selected);
-                    }
-                };
+                applyFirmwareOptions(release.tag_name, firmwareOptions);
             } catch (err) {
                 console.error("Failed to load release:", err);
                 versionInfo.textContent = "Could not fetch latest release. Check the releases page.";

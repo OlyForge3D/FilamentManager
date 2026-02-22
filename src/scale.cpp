@@ -1,9 +1,37 @@
+#include "scale.h"
+#include "config.h"
+#include "display.h"
+
+#ifdef DISABLE_SCALE
+
+// Stub implementations when scale is disabled
+TaskHandle_t ScaleTask = NULL;
+
+int16_t weight = 0;
+uint8_t weightCounterToApi = 0;
+uint8_t scale_tare_counter = 0;
+bool scaleTareRequest = false;
+uint8_t pauseMainTask = 0;
+bool scaleCalibrated = true;  // Pretend calibrated so main loop doesn't block
+bool autoTare = false;
+bool scaleCalibrationActive = false;
+
+void resetWeightFilter() {}
+float calculateMovingAverage() { return 0.0f; }
+float applyLowPassFilter(float newValue) { return 0.0f; }
+int16_t processWeightReading(float rawWeight) { return 0; }
+int16_t getFilteredDisplayWeight() { return 0; }
+uint8_t setAutoTare(bool autoTareValue) { return 1; }
+uint8_t start_scale(bool touchSensorConnected) { return 1; }
+uint8_t calibrate_scale() { return 1; }
+uint8_t tareScale() { return 1; }
+
+#else
+
 #include "nfc.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include "config.h"
 #include "HX711.h"
-#include "display.h"
 #include "esp_task_wdt.h"
 #include <Preferences.h>
 
@@ -401,3 +429,5 @@ uint8_t calibrate_scale() {
 
   return returnState;
 }
+
+#endif // DISABLE_SCALE

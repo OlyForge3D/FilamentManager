@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 200" role="img" aria-labelledby="title desc">
+  <title id="title">ESP32-C3-Mini board</title>
+  <desc id="desc">Illustration of an ESP32-C3-Mini board.</desc>
+  <rect width="360" height="200" fill="#0f1a2f"/>
+  <rect x="120" y="22" width="120" height="156" rx="12" fill="#235f98" stroke="#2f86d7" stroke-width="2"/>
+  <rect x="165" y="16" width="30" height="12" rx="3" fill="#d7d9dd"/>
+  <rect x="142" y="38" width="76" height="36" rx="6" fill="#bcc2ca"/>
+  <rect x="149" y="45" width="62" height="22" rx="4" fill="#5e6470"/>
+  <rect x="152" y="84" width="56" height="30" rx="4" fill="#2d3340"/>
+  <rect x="150" y="120" width="60" height="16" rx="3" fill="#404959"/>
+  <g fill="#d8dbdf">
+    <rect x="112" y="40" width="8" height="8"/><rect x="112" y="56" width="8" height="8"/><rect x="112" y="72" width="8" height="8"/>
+    <rect x="112" y="88" width="8" height="8"/><rect x="112" y="104" width="8" height="8"/><rect x="112" y="120" width="8" height="8"/>
+    <rect x="112" y="136" width="8" height="8"/><rect x="112" y="152" width="8" height="8"/>
+    <rect x="240" y="40" width="8" height="8"/><rect x="240" y="56" width="8" height="8"/><rect x="240" y="72" width="8" height="8"/>
+    <rect x="240" y="88" width="8" height="8"/><rect x="240" y="104" width="8" height="8"/><rect x="240" y="120" width="8" height="8"/>
+    <rect x="240" y="136" width="8" height="8"/><rect x="240" y="152" width="8" height="8"/>
+  </g>
+  <text x="180" y="188" text-anchor="middle" fill="#d9dbe1" font-family="Arial, sans-serif" font-size="18">ESP32-C3-Mini</text>
+</svg>
