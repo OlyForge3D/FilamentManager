@@ -39,7 +39,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y xxd
 
       - name: Build firmware
-        run: pio run -e esp32dev
+        run: pio run -e esp32-wroom-32d
 
       - name: Build LittleFS
         run: pio run -t buildfs
@@ -47,5 +47,5 @@ jobs:
       - name: Report binary size
         run: |
           echo "### Firmware Size" >> $GITHUB_STEP_SUMMARY
-          ls -lh .pio/build/esp32dev/firmware.bin | awk '{print "Firmware: " $5}' >> $GITHUB_STEP_SUMMARY
-          ls -lh .pio/build/esp32dev/littlefs.bin | awk '{print "LittleFS: " $5}' >> $GITHUB_STEP_SUMMARY
+          ls -lh .pio/build/esp32-wroom-32d/firmware.bin | awk '{print "Firmware: " $5}' >> $GITHUB_STEP_SUMMARY
+          ls -lh .pio/build/esp32-wroom-32d/littlefs.bin | awk '{print "LittleFS: " $5}' >> $GITHUB_STEP_SUMMARY
