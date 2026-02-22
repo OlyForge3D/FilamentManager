@@ -104,28 +104,41 @@ jobs:
     - name: Build Firmware
       run: |
         VERSION=${{ steps.get_version.outputs.VERSION }}
+        ARTIFACT_DIR=".pio/build/release-artifacts"
+        ENVS=("esp32-wroom-32d" "esp32-c3-mini" "esp32-c3-supermini")
 
-        echo "Building firmware and LittleFS..."
-        pio run -e esp32-wroom-32d
-        pio run -e esp32-wroom-32d -t buildfs
+        mkdir -p "${ARTIFACT_DIR}"
 
-        cp .pio/build/esp32-wroom-32d/firmware.bin .pio/build/esp32-wroom-32d/upgrade_filaman_firmware_v${VERSION}.bin
-        cp .pio/build/esp32-wroom-32d/littlefs.bin .pio/build/esp32-wroom-32d/upgrade_filaman_website_v${VERSION}.bin
+        for ENV in "${ENVS[@]}"; do
+          BUILD_DIR=".pio/build/${ENV}"
+          CHIP="esp32"
+          BOOTLOADER_OFFSET="0x1000"
 
-        (cd .pio/build/esp32-wroom-32d &&
-        esptool.py --chip esp32 merge_bin \
-          --fill-flash-size 4MB \
-          --flash_mode dio \
-          --flash_freq 40m \
-          --flash_size 4MB \
-          -o filaman_full_${VERSION}.bin \
-          0x1000 bootloader.bin \
-          0x8000 partitions.bin \
-          0x10000 firmware.bin \
-          0x3D0000 littlefs.bin)
+          if [[ "${ENV}" == esp32-c3-* ]]; then
+            CHIP="esp32c3"
+            BOOTLOADER_OFFSET="0x0"
+          elif [[ "${ENV}" == esp32-c6-* ]]; then
+            CHIP="esp32c6"
+            BOOTLOADER_OFFSET="0x0"
+          fi
 
-        echo "File sizes:"
-        (cd .pio/build/esp32-wroom-32d && ls -lh *.bin)
+          echo "Building ${ENV}..."
+          pio run -e "${ENV}"
+          pio run -e "${ENV}" -t buildfs
+
+          cp "${BUILD_DIR}/firmware.bin" "${ARTIFACT_DIR}/upgrade_filaman_firmware_${ENV}_v${VERSION}.bin"
+          cp "${BUILD_DIR}/littlefs.bin" "${ARTIFACT_DIR}/upgrade_filaman_website_${ENV}_v${VERSION}.bin"
+
+          esptool.py --chip "${CHIP}" merge_bin \
+            -o "${ARTIFACT_DIR}/filaman_full_${ENV}_v${VERSION}.bin" \
+            "${BOOTLOADER_OFFSET}" "${BUILD_DIR}/bootloader.bin" \
+            0x8000 "${BUILD_DIR}/partitions.bin" \
+            0x10000 "${BUILD_DIR}/firmware.bin" \
+            0x3D0000 "${BUILD_DIR}/littlefs.bin"
+        done
+
+        echo "Release artifact sizes:"
+        ls -lh "${ARTIFACT_DIR}"/*.bin
 
     - name: Commit version bump and tag
       run: |
@@ -142,27 +155,14 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         VERSION=${{ steps.get_version.outputs.VERSION }}
-        cd .pio/build/esp32-wroom-32d
+        cd .pio/build/release-artifacts
 
-        FILES_TO_UPLOAD=""
-
-        if [ -f "upgrade_filaman_firmware_v${VERSION}.bin" ]; then
-          FILES_TO_UPLOAD="$FILES_TO_UPLOAD upgrade_filaman_firmware_v${VERSION}.bin"
-        fi
-
-        if [ -f "upgrade_filaman_website_v${VERSION}.bin" ]; then
-          FILES_TO_UPLOAD="$FILES_TO_UPLOAD upgrade_filaman_website_v${VERSION}.bin"
-        fi
-
-        if [ -f "filaman_full_${VERSION}.bin" ]; then
-          FILES_TO_UPLOAD="$FILES_TO_UPLOAD filaman_full_${VERSION}.bin"
-        fi
-
-        if [ -n "$FILES_TO_UPLOAD" ]; then
+        mapfile -t FILES_TO_UPLOAD < <(ls -1 *.bin)
+        if [ ${#FILES_TO_UPLOAD[@]} -gt 0 ]; then
           gh release create "v${VERSION}" \
             --title "Release ${VERSION}" \
             --notes "${{ steps.release_notes.outputs.CHANGES }}" \
-            $FILES_TO_UPLOAD
+            "${FILES_TO_UPLOAD[@]}"
         else
           echo "Error: No files found to upload"
           exit 1

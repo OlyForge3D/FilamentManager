@@ -67,6 +67,28 @@ header h1 {
     color: var(--primary);
 }
 
+.firmware-select-wrapper {
+    text-align: left;
+    margin: 0.75rem 0 1rem;
+}
+
+.firmware-select-wrapper label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+}
+
+.firmware-select-wrapper select {
+    width: 100%;
+    background: var(--accent);
+    color: var(--text);
+    border: 1px solid #2a466b;
+    border-radius: 8px;
+    padding: 0.55rem 0.65rem;
+    font-size: 0.9rem;
+}
+
 .install-button-wrapper {
     margin: 1.25rem 0;
 }
