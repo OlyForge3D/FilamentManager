@@ -12,6 +12,18 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+          - esp32-wroom-32d
+          - esp32-wroom-32d-lite
+          - esp32-c3-mini
+          - esp32-c3-mini-lite
+          - esp32-c3-supermini
+          - esp32-c3-supermini-lite
+          - esp32-c6-devkit
+          - esp32-c6-devkit-lite
     steps:
       - uses: actions/checkout@v4
 
@@ -39,13 +51,13 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y xxd
 
       - name: Build firmware
-        run: pio run -e esp32-wroom-32d
+        run: pio run -e ${{ matrix.env }}
 
       - name: Build LittleFS
-        run: pio run -t buildfs
+        run: pio run -e ${{ matrix.env }} -t buildfs
 
       - name: Report binary size
         run: |
-          echo "### Firmware Size" >> $GITHUB_STEP_SUMMARY
-          ls -lh .pio/build/esp32-wroom-32d/firmware.bin | awk '{print "Firmware: " $5}' >> $GITHUB_STEP_SUMMARY
-          ls -lh .pio/build/esp32-wroom-32d/littlefs.bin | awk '{print "LittleFS: " $5}' >> $GITHUB_STEP_SUMMARY
+          echo "### Firmware Size (${{ matrix.env }})" >> $GITHUB_STEP_SUMMARY
+          ls -lh .pio/build/${{ matrix.env }}/firmware.bin | awk '{print "Firmware: " $5}' >> $GITHUB_STEP_SUMMARY
+          ls -lh .pio/build/${{ matrix.env }}/littlefs.bin | awk '{print "LittleFS: " $5}' >> $GITHUB_STEP_SUMMARY

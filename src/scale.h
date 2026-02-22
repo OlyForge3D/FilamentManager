@@ -9,7 +9,7 @@ extern HX711 scale;
 #endif
 
 uint8_t setAutoTare(bool autoTareValue);
-uint8_t start_scale(bool touchSensorConnected);
+void start_scale(bool touchSensorConnected);
 uint8_t calibrate_scale();
 uint8_t tareScale();
 
@@ -23,7 +23,7 @@ int16_t getFilteredDisplayWeight();
 extern int16_t weight;
 extern uint8_t weightCounterToApi;
 extern uint8_t scale_tare_counter;
-extern uint8_t scaleTareRequest;
+extern bool scaleTareRequest;
 extern uint8_t pauseMainTask;
 extern bool scaleCalibrated;
 extern bool autoTare;
