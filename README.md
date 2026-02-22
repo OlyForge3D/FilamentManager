@@ -3,34 +3,16 @@
 > **An ESP32 NFC filament management system for 3D printing.**
 > Read and write NFC spool tags, track filament usage, and integrate with Spoolman, Moonraker/Klipper, Bambu Lab AMS, and [PrintFarmer](https://github.com/jpapiez/PrintFarmer).
 
-## Credits & Origin
+## Attribution
 
-This project is a fork of [**FilaMan**](https://github.com/ManuelW77/Filaman) by [ManuelW77](https://github.com/ManuelW77). FilaMan provides the ESP32 + PN532 hardware platform, WiFiManager captive portal, Spoolman integration, Bambu Lab AMS MQTT support, optional HX711 scale, OLED display, OTA updates, and the full web UI that this project builds upon.
+FilamentManager is derived from [FilaMan](https://github.com/ManuelW77/Filaman) by Manuel Weiser.
+To satisfy MIT license requirements, the original copyright and permission notice are retained in [LICENSE.txt](LICENSE.txt).
 
-**If you appreciate the foundation this project is built on, please support the original author:**
+## What FilamentManager Adds
 
-<a href="https://www.buymeacoffee.com/manuelw" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 30px !important;width: 108px !important;" ></a>
-
-- Original project: [github.com/ManuelW77/Filaman](https://github.com/ManuelW77/Filaman)
-- Original website: [filaman.app](https://www.filaman.app)
-- Original wiki: [FilaMan Wiki](https://github.com/ManuelW77/Filaman/wiki)
-- Discord: [FilaMan Discord](https://discord.gg/my7Gvaxj2v)
-
----
-
-## What This Fork Adds
-
-FilamentManager extends FilaMan with multi-backend printer support, the OpenPrintTag NFC standard, and PrintFarmer integration for centralized printer farm management.
-
-| Feature | FilaMan (upstream) | FilamentManager (this fork) |
-|---|---|---|
-| NFC formats | OpenSpool JSON | OpenSpool JSON + **OpenPrintTag binary TLV** |
-| Printer backends | Bambu Lab AMS (MQTT) | Bambu Lab AMS + **Moonraker/Klipper** + **PrintFarmer** |
-| Spool management | Spoolman | Spoolman + **Moonraker Spoolman proxy** |
-| Fleet management | — | **PrintFarmer heartbeat + scan webhooks** |
-| NFC tag formats | NTAG213/215 | NTAG213/215/216 |
-
-All original FilaMan features (scale, display, WiFiManager, OTA, Bambu AMS, Spoolman, manufacturer tags) are preserved.
+- OpenPrintTag binary TLV support in addition to OpenSpool JSON
+- Multi-backend printer integrations (Moonraker/Klipper and PrintFarmer)
+- Fleet management hooks (heartbeat + scan webhooks) for PrintFarmer
 
 ## Features
 
@@ -44,7 +26,7 @@ All original FilaMan features (scale, display, WiFiManager, OTA, Bambu AMS, Spoo
 
 ### Printer Backend Integrations
 
-- **Bambu Lab AMS** — MQTT-based AMS slot assignment and monitoring (from upstream FilaMan)
+- **Bambu Lab AMS** — MQTT-based AMS slot assignment and monitoring
 - **Moonraker/Klipper** — sets active spool via `POST /server/spoolman/spool_id` on scan; Moonraker's Spoolman proxy can replace direct Spoolman access
 - **PrintFarmer** — reports spool scans and device health to a PrintFarmer server for centralized farm management
 
@@ -55,7 +37,7 @@ All original FilaMan features (scale, display, WiFiManager, OTA, Bambu AMS, Spoo
 - **Auto-registration** — the PrintFarmer server creates the device record on first heartbeat
 - **Companion page** — PrintFarmer includes a React NFC Devices page showing device status, scan history, and associated printers
 
-### Spoolman Integration (from upstream)
+### Spoolman Integration
 
 - List, filter, and select filament spools
 - Update spool weights automatically via scale
@@ -63,7 +45,7 @@ All original FilaMan features (scale, display, WiFiManager, OTA, Bambu AMS, Spoo
 - Manufacturer tag auto-import
 - Supports Spoolman OctoPrint Plugin
 
-### Hardware Features (from upstream)
+### Hardware Features
 
 - **Weight measurement** — HX711 load cell for precise spool weighing
 - **NFC read/write** — PN532 module via I2C
@@ -73,11 +55,11 @@ All original FilaMan features (scale, display, WiFiManager, OTA, Bambu AMS, Spoo
 
 ## Manufacturer Tags Support
 
-FilaMan supports **Manufacturer Tags** — NFC tags that come pre-programmed directly from filament manufacturers.
+FilamentManager supports **Manufacturer Tags** — NFC tags that come pre-programmed directly from filament manufacturers.
 
 ### RecyclingFabrik Partnership
 
-[**RecyclingFabrik**](https://www.recyclingfabrik.com) is the first manufacturer to support FilaMan-compatible NFC tags on their spools. When scanned, these tags automatically create Spoolman entries with manufacturer-verified specifications.
+[**RecyclingFabrik**](https://www.recyclingfabrik.com) is the first manufacturer to support FilamentManager-compatible NFC tags on their spools. When scanned, these tags automatically create Spoolman entries with manufacturer-verified specifications.
 
 For technical details: [Manufacturer Tags Documentation](README_ManufacturerTags_EN.md)
 
@@ -164,16 +146,16 @@ You have to activate Spoolman in debug mode, because you are not able to set COR
 
 ## Step-by-Step Installation
 ### Easy Installation
-1. **Go to [FilaMan Installer](https://www.filaman.app/installer.html)**
+1. **Go to [FilamentManager Web Installer](https://olyforge3d.github.io/FilamentManager/installer/)**
 
 2. **Plug you device in and push Connect button**
 
 3. **Select your Device Port and push Intall**
 
 4. **Initial Setup:**
-    - Connect to the "FilaMan" WiFi access point.
+    - Connect to the device WiFi access point (default SSID: "FilaMan").
     - Configure WiFi settings through the captive portal.
-    - Access the web interface at `http://filaman.local` or the IP address.
+    - Access the web interface at `http://filaman.local` (default hostname) or the IP address.
 
 ### Compile by yourself
 1. **Clone the Repository:**
@@ -190,9 +172,9 @@ You have to activate Spoolman in debug mode, because you are not able to set COR
     pio run --target upload
     ```
 4. **Initial Setup:**
-    - Connect to the "FilaMan" WiFi access point.
+    - Connect to the device WiFi access point (default SSID: "FilaMan").
     - Configure WiFi settings through the captive portal.
-    - Access the web interface at `http://filaman.local` or the IP address.
+    - Access the web interface at `http://filaman.local` (default hostname) or the IP address.
 
 ## Documentation
 
@@ -207,7 +189,7 @@ You have to activate Spoolman in debug mode, because you are not able to set COR
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE.txt](LICENSE.txt) file for details.
 
 ## Materials
 
@@ -223,9 +205,5 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Availability
 
-- **This fork**: [github.com/OlyForge3D/FilamentManager](https://github.com/OlyForge3D/FilamentManager)
-- **Original FilaMan**: [github.com/ManuelW77/Filaman](https://github.com/ManuelW77/Filaman)
+- **FilamentManager**: [github.com/OlyForge3D/FilamentManager](https://github.com/OlyForge3D/FilamentManager)
 - **PrintFarmer**: [github.com/jpapiez/PrintFarmer](https://github.com/jpapiez/PrintFarmer)
-
-### Support the original FilaMan author
-<a href="https://www.buymeacoffee.com/manuelw" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 30px !important;width: 108px !important;" ></a>
