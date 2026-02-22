@@ -7,8 +7,8 @@ ESP32 Arduino firmware for NFC-based 3D printer filament management. Reads/write
 ## Build Commands
 
 ```bash
-# Build firmware (default env: esp32dev)
-pio run -e esp32dev
+# Build firmware (default env: esp32-wroom-32d)
+pio run -e esp32-wroom-32d
 
 # Build LittleFS filesystem image (runs combine_html.py + gzip_files.py automatically)
 pio run -t buildfs
