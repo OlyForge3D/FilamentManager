@@ -11,6 +11,9 @@
 #include "nfc.h"
 #include "scale.h"
 #include "esp_task_wdt.h"
+#if __has_include(<esp_idf_version.h>)
+#include <esp_idf_version.h>
+#endif
 #include "commonFS.h"
 
 bool mainTaskWasPaused = 0;
@@ -74,7 +77,15 @@ void setup() {
 
   // Initialize WDT with 10 second timeout
   bool panic = true; // If true, WDT timeout triggers a system panic
+#if defined(ESP_IDF_VERSION_MAJOR) && (ESP_IDF_VERSION_MAJOR >= 5)
+  esp_task_wdt_config_t wdt_config;
+  wdt_config.timeout_ms = 10000;
+  wdt_config.idle_core_mask = 0;
+  wdt_config.trigger_panic = panic;
+  esp_task_wdt_init(&wdt_config);
+#else
   esp_task_wdt_init(10, panic);
+#endif
 
   booting = false;
   // Add current task (loopTask) to watchdog
