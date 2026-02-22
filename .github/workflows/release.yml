@@ -131,6 +131,7 @@ jobs:
           pio run -e "${ENV}"
           pio run -e "${ENV}" -t buildfs
 
+          mkdir -p "${ARTIFACT_DIR}"
           cp "${BUILD_DIR}/firmware.bin" "${ARTIFACT_DIR}/upgrade_filaman_firmware_${ENV}${EXPERIMENTAL_SUFFIX}_v${VERSION}.bin"
           cp "${BUILD_DIR}/littlefs.bin" "${ARTIFACT_DIR}/upgrade_filaman_website_${ENV}${EXPERIMENTAL_SUFFIX}_v${VERSION}.bin"
 
