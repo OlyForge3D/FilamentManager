@@ -1520,6 +1520,86 @@ String loadMoonrakerUrl() {
 // PrintFarmer Integration
 // ============================================================================
 
+String fetchPrintFarmerPrinters(const String& url) {
+    JsonDocument responseDoc;
+    responseDoc["type"] = "fetchPrintFarmerPrinters";
+    responseDoc["success"] = false;
+    JsonArray printersOut = responseDoc["printers"].to<JsonArray>();
+
+    String baseUrl = url;
+    baseUrl.trim();
+    if (baseUrl.length() == 0) {
+        responseDoc["error"] = "PrintFarmer URL is required";
+        String response;
+        serializeJson(responseDoc, response);
+        return response;
+    }
+
+    while (baseUrl.endsWith("/")) {
+        baseUrl.remove(baseUrl.length() - 1);
+    }
+
+    String endpoint = baseUrl + "/api/filaman/printers";
+    HTTPClient http;
+    http.begin(endpoint);
+    http.addHeader("Accept", "application/json");
+
+    Serial.println("PrintFarmer: fetching printers from " + endpoint);
+    int httpCode = http.GET();
+    String payload = http.getString();
+    http.end();
+
+    if (httpCode != HTTP_CODE_OK) {
+        responseDoc["error"] = "HTTP " + String(httpCode);
+        if (payload.length() > 0) {
+            responseDoc["details"] = payload;
+        }
+        String response;
+        serializeJson(responseDoc, response);
+        return response;
+    }
+
+    JsonDocument printersDoc;
+    DeserializationError error = deserializeJson(printersDoc, payload);
+    if (error) {
+        responseDoc["error"] = "Invalid JSON from PrintFarmer";
+        responseDoc["details"] = error.c_str();
+        String response;
+        serializeJson(responseDoc, response);
+        return response;
+    }
+
+    auto appendPrinters = [&printersOut](JsonArray printers) {
+        for (JsonObject printer : printers) {
+            String backend = printer["backend"] | "";
+            if (backend.length() == 0) backend = printer["backendName"] | "";
+            if (backend.length() == 0) backend = printer["backend"]["name"] | "";
+            if (backend.length() == 0) backend = printer["backend"]["id"] | "";
+
+            JsonObject outPrinter = printersOut.add<JsonObject>();
+            outPrinter["id"] = printer["id"] | "";
+            outPrinter["name"] = printer["name"] | "Unnamed printer";
+            outPrinter["backend"] = backend;
+        }
+    };
+
+    if (printersDoc.is<JsonArray>()) {
+        appendPrinters(printersDoc.as<JsonArray>());
+    } else if (printersDoc["items"].is<JsonArray>()) {
+        appendPrinters(printersDoc["items"].as<JsonArray>());
+    } else {
+        responseDoc["error"] = "Unexpected response format";
+        String response;
+        serializeJson(responseDoc, response);
+        return response;
+    }
+
+    responseDoc["success"] = true;
+    String response;
+    serializeJson(responseDoc, response);
+    return response;
+}
+
 bool updateSpoolPrintFarmer(int spoolId) {
     if (!printFarmerEnabled || printFarmerUrl.length() == 0 || printFarmerPrinterId.length() == 0) {
         Serial.println("PrintFarmer not configured, skipping");

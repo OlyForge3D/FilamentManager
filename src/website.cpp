@@ -149,6 +149,12 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
             ws.textAll("{\"type\":\"savePrintFarmerSettings\",\"payload\":\"success\"}");
         }
 
+        else if (doc["type"] == "fetchPrintFarmerPrinters") {
+            String url = doc["payload"]["url"].as<String>();
+            String response = fetchPrintFarmerPrinters(url);
+            ws.text(client->id(), response);
+        }
+
         else {
             Serial.println("Unknown WebSocket type: " + doc["type"].as<String>());
         }

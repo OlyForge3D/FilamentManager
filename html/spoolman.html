@@ -225,13 +225,20 @@
                     <input type="text" id="printFarmerUrl" placeholder="http://ip-of-printfarmer:5245">
                 </div>
                 <div class="input-group">
-                    <label for="printFarmerApiKey">API Key / Token:</label>
+                    <label for="printFarmerApiKey">API Key / Token (for active spool updates):</label>
                     <input type="text" id="printFarmerApiKey" placeholder="Bearer token">
                 </div>
                 <div class="input-group">
                     <label for="printFarmerPrinterId">Printer ID:</label>
                     <input type="text" id="printFarmerPrinterId" placeholder="UUID of the printer in PrintFarmer">
                 </div>
+                <div class="input-group">
+                    <label for="printFarmerPrinterSelect">Available Printers:</label>
+                    <select id="printFarmerPrinterSelect">
+                        <option value="">Load printers to select one</option>
+                    </select>
+                </div>
+                <button onclick="fetchPrintFarmerPrinters()">Load Printers</button>
                 <button onclick="savePrintFarmerSettings()">Save PrintFarmer Settings</button>
                 <p id="printFarmerStatusMessage"></p>
             </div>
@@ -239,6 +246,40 @@
     </div>
 
     <script>
+        function websocketUrl() {
+            const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+            return protocol + window.location.host + '/ws';
+        }
+
+        function setPrintFarmerPrinterOptions(printers, selectedId = '') {
+            const printerSelect = document.getElementById('printFarmerPrinterSelect');
+            const printerIdInput = document.getElementById('printFarmerPrinterId');
+            printerSelect.innerHTML = '';
+
+            if (!printers || printers.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No printers found';
+                printerSelect.appendChild(option);
+                return;
+            }
+
+            printers.forEach(printer => {
+                const option = document.createElement('option');
+                option.value = printer.id || '';
+                const backendSuffix = printer.backend ? ` [${printer.backend}]` : '';
+                option.textContent = `${printer.name || printer.id}${backendSuffix}`;
+                printerSelect.appendChild(option);
+            });
+
+            if (selectedId) {
+                printerSelect.value = selectedId;
+            }
+            if (printerSelect.value) {
+                printerIdInput.value = printerSelect.value;
+            }
+        }
+
         // Load backend settings on page load
         fetch('/api/backends')
             .then(r => r.json())
@@ -251,12 +292,24 @@
                     document.getElementById('printFarmerUrl').value = data.printfarmer.url || '';
                     document.getElementById('printFarmerApiKey').value = data.printfarmer.apiKey || '';
                     document.getElementById('printFarmerPrinterId').value = data.printfarmer.printerId || '';
+                    if (data.printfarmer.printerId) {
+                        setPrintFarmerPrinterOptions(
+                            [{ id: data.printfarmer.printerId, name: `Saved printer (${data.printfarmer.printerId})`, backend: '' }],
+                            data.printfarmer.printerId
+                        );
+                    }
                 }
             })
             .catch(e => console.error('Error loading backend settings:', e));
 
+        document.getElementById('printFarmerPrinterSelect').addEventListener('change', function() {
+            if (this.value) {
+                document.getElementById('printFarmerPrinterId').value = this.value;
+            }
+        });
+
         function saveMoonrakerSettings() {
-            const ws = new WebSocket('ws://' + window.location.host + '/ws');
+            const ws = new WebSocket(websocketUrl());
             ws.onopen = function() {
                 ws.send(JSON.stringify({
                     type: 'saveMoonrakerSettings',
@@ -270,8 +323,59 @@
             };
         }
 
+        function fetchPrintFarmerPrinters() {
+            const statusMessage = document.getElementById('printFarmerStatusMessage');
+            const url = document.getElementById('printFarmerUrl').value.trim();
+            const selectedPrinterId = document.getElementById('printFarmerPrinterId').value.trim();
+
+            if (!url) {
+                statusMessage.innerText = 'Please enter a PrintFarmer URL first.';
+                return;
+            }
+
+            statusMessage.innerText = 'Loading printers from PrintFarmer...';
+            const ws = new WebSocket(websocketUrl());
+
+            ws.onopen = function() {
+                ws.send(JSON.stringify({
+                    type: 'fetchPrintFarmerPrinters',
+                    payload: { url }
+                }));
+            };
+
+            ws.onmessage = function(event) {
+                let data;
+                try {
+                    data = JSON.parse(event.data);
+                } catch (error) {
+                    statusMessage.innerText = 'Failed to parse printer list response.';
+                    ws.close();
+                    return;
+                }
+
+                if (data.type !== 'fetchPrintFarmerPrinters') return;
+
+                if (data.success) {
+                    setPrintFarmerPrinterOptions(data.printers || [], selectedPrinterId);
+                    statusMessage.innerText = `Loaded ${(data.printers || []).length} printer(s).`;
+                } else {
+                    statusMessage.innerText = `Failed to load printers: ${data.error || 'Unknown error'}`;
+                }
+                ws.close();
+            };
+
+            ws.onerror = function() {
+                statusMessage.innerText = 'Failed to contact device WebSocket service.';
+            };
+        }
+
         function savePrintFarmerSettings() {
-            const ws = new WebSocket('ws://' + window.location.host + '/ws');
+            const selectedPrinter = document.getElementById('printFarmerPrinterSelect').value;
+            if (selectedPrinter) {
+                document.getElementById('printFarmerPrinterId').value = selectedPrinter;
+            }
+
+            const ws = new WebSocket(websocketUrl());
             ws.onopen = function() {
                 ws.send(JSON.stringify({
                     type: 'savePrintFarmerSettings',
