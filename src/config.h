@@ -32,6 +32,55 @@
 #define NVS_KEY_AUTOTARE                    "auto_tare"
 #define SCALE_DEFAULT_CALIBRATION_VALUE     430.0f;
 
+// ── Pin configuration NVS ──
+#define NVS_NAMESPACE_PINS                  "pins"
+#define NVS_KEY_PN532_SCK                   "pn532Sck"
+#define NVS_KEY_PN532_MISO                  "pn532Miso"
+#define NVS_KEY_PN532_MOSI                  "pn532Mosi"
+#define NVS_KEY_PN532_SS                    "pn532Ss"
+#define NVS_KEY_PN532_IRQ                   "pn532Irq"
+#define NVS_KEY_PN532_RESET                 "pn532Rst"
+
+// Board name set via build flag; fallback for legacy builds
+#ifndef BOARD_NAME
+  #define BOARD_NAME "ESP32-WROOM-32D"
+#endif
+
+// Board-specific default pins (set via build flags in platformio.ini)
+#ifndef DEFAULT_PN532_SCK
+  #define DEFAULT_PN532_SCK   18
+#endif
+#ifndef DEFAULT_PN532_MISO
+  #define DEFAULT_PN532_MISO  19
+#endif
+#ifndef DEFAULT_PN532_MOSI
+  #define DEFAULT_PN532_MOSI  23
+#endif
+#ifndef DEFAULT_PN532_SS
+  #define DEFAULT_PN532_SS    5
+#endif
+#ifndef DEFAULT_PN532_IRQ
+  #define DEFAULT_PN532_IRQ   4
+#endif
+#ifndef DEFAULT_PN532_RESET
+  #define DEFAULT_PN532_RESET 27
+#endif
+
+// PN532 pin structure
+struct Pn532Pins {
+  uint8_t sck;
+  uint8_t miso;
+  uint8_t mosi;
+  uint8_t ss;
+  uint8_t irq;
+  uint8_t reset;
+};
+
+extern Pn532Pins pn532Pins;
+
+void loadPinConfig();
+bool savePinConfig(const Pn532Pins &pins);
+
 #define BAMBU_USERNAME                      "bblp"
 
 #define OLED_RESET                          -1      // Reset pin # (or -1 if sharing Arduino reset pin)
@@ -45,9 +94,6 @@
 #define WIFI_CHECK_INTERVAL                 60000U
 #define DISPLAY_UPDATE_INTERVAL             1000U
 #define SPOOLMAN_HEALTHCHECK_INTERVAL       60000U
-
-extern const uint8_t PN532_IRQ;
-extern const uint8_t PN532_RESET;
 
 extern const uint8_t LOADCELL_DOUT_PIN;
 extern const uint8_t LOADCELL_SCK_PIN;

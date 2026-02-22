@@ -480,6 +480,86 @@ void setupWebserver(AsyncWebServer &server) {
         request->send(200, "application/json", jsonResponse);
     });
 
+    // ── GET /api/v1/pins ──
+    server.on("/api/v1/pins", HTTP_GET, [](AsyncWebServerRequest *request){
+        JsonDocument doc;
+        doc["board"] = BOARD_NAME;
+        doc["current"]["sck"]   = pn532Pins.sck;
+        doc["current"]["miso"]  = pn532Pins.miso;
+        doc["current"]["mosi"]  = pn532Pins.mosi;
+        doc["current"]["ss"]    = pn532Pins.ss;
+        doc["current"]["irq"]   = pn532Pins.irq;
+        doc["current"]["reset"] = pn532Pins.reset;
+        doc["defaults"]["sck"]   = (uint8_t)DEFAULT_PN532_SCK;
+        doc["defaults"]["miso"]  = (uint8_t)DEFAULT_PN532_MISO;
+        doc["defaults"]["mosi"]  = (uint8_t)DEFAULT_PN532_MOSI;
+        doc["defaults"]["ss"]    = (uint8_t)DEFAULT_PN532_SS;
+        doc["defaults"]["irq"]   = (uint8_t)DEFAULT_PN532_IRQ;
+        doc["defaults"]["reset"] = (uint8_t)DEFAULT_PN532_RESET;
+        String jsonResponse;
+        serializeJson(doc, jsonResponse);
+        request->send(200, "application/json", jsonResponse);
+    });
+
+    // ── POST /api/v1/pins/update ──
+    server.on("/api/v1/pins/update", HTTP_POST, [](AsyncWebServerRequest *request){
+        auto parsePinValue = [request](const char *name, int &out) -> bool {
+            const AsyncWebParameter *param = nullptr;
+            if (request->hasParam(name, true)) {
+                param = request->getParam(name, true);
+            } else if (request->hasParam(name)) {
+                param = request->getParam(name);
+            } else {
+                return false;
+            }
+
+            String value = param->value();
+            if (value.length() == 0) return false;
+
+            int parsed = 0;
+            for (size_t i = 0; i < value.length(); i++) {
+                char c = value.charAt(i);
+                if (c < '0' || c > '9') return false;
+                parsed = (parsed * 10) + (c - '0');
+                if (parsed > 255) return false;
+            }
+
+            out = parsed;
+            return true;
+        };
+
+        int vals[6];
+        const char* names[6] = {"sck", "miso", "mosi", "ss", "irq", "reset"};
+        for (int i = 0; i < 6; i++) {
+            if (!parsePinValue(names[i], vals[i])) {
+                request->send(400, "application/json",
+                    "{\"success\":false,\"error\":\"Invalid pin parameters - values must be numeric\"}");
+                return;
+            }
+        }
+
+        Pn532Pins newPins;
+        newPins.sck   = (uint8_t)vals[0];
+        newPins.miso  = (uint8_t)vals[1];
+        newPins.mosi  = (uint8_t)vals[2];
+        newPins.ss    = (uint8_t)vals[3];
+        newPins.irq   = (uint8_t)vals[4];
+        newPins.reset = (uint8_t)vals[5];
+
+        if (!savePinConfig(newPins)) {
+            request->send(400, "application/json", "{\"success\":false,\"error\":\"Validation failed - pins must be unique and between 0-48\"}");
+            return;
+        }
+        request->send(200, "application/json", "{\"success\":true,\"message\":\"Pins saved. Reboot to apply.\"}");
+    });
+
+    // ── Hardware / Pin Mapping page ──
+    server.on("/hardware", HTTP_GET, [](AsyncWebServerRequest *request){
+        Serial.println("Request for /hardware received");
+        String html = loadHtmlWithHeader("/hardware.html");
+        request->send(200, "text/html", html);
+    });
+
     // Error handling for pages not found
     server.onNotFound([](AsyncWebServerRequest *request){
         Serial.print("404 - Not found: ");
