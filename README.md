@@ -81,19 +81,26 @@ For technical details: [Manufacturer Tags Documentation](README_ManufacturerTags
 
 
 ### Pin Configuration
-| Component          | ESP32 Pin |
-|-------------------|-----------|
-| HX711 DOUT        | 16        |
-| HX711 SCK         | 17        |
-| OLED SDA          | 21        |
-| OLED SCL          | 22        |
-| PN532 IRQ         | 32        |
-| PN532 RESET       | 33        |
-| PN532 SDA         | 21        |
-| PN532 SCL         | 22        |
-| TTP223 I/O        | 25        |
 
-**!! Make sure that the DIP switches on the PN532 are set to I2C**  
+Default PN532 wiring is **software SPI** and varies by firmware target (these defaults can be changed in the Hardware page and are stored in NVS):
+
+| Firmware target | PN532 SCK | PN532 MISO | PN532 MOSI | PN532 SS | PN532 IRQ | PN532 RESET |
+|---|---:|---:|---:|---:|---:|---:|
+| ESP32-WROOM-32D | 18 | 19 | 23 | 5 | 4 | 27 |
+| ESP32-C3-Mini | 4 | 5 | 6 | 7 | 10 | 3 |
+| ESP32-C3-SuperMini | 4 | 5 | 6 | 7 | 10 | 3 |
+| ESP32-C6-DevKit-1 | 6 | 2 | 7 | 18 | 19 | 20 |
+
+Shared defaults currently used by the firmware:
+
+| Component | Default GPIO | Notes |
+|---|---:|---|
+| HX711 DOUT | 16 | Shared across targets in current firmware |
+| HX711 SCK | 17 | Shared across targets in current firmware |
+| TTP223 I/O (optional) | 25 | Primarily used on ESP32-WROOM-32D style wiring |
+| OLED I2C | board default `Wire` pins | On ESP32-WROOM-32D this is typically SDA=21, SCL=22 |
+
+**Make sure PN532 DIP switches are set to SPI mode.**  
 **Use the 3V pin from the ESP for the touch sensor**
 
 ![Wiring](./img/Schaltplan.png)
