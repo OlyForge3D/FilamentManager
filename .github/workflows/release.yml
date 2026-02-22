@@ -55,6 +55,9 @@ jobs:
             echo "## Initial Release"
           fi
           echo ""
+          echo "## Board Support"
+          echo "- ESP32-C6-DevKit-1 artifacts are experimental and built using the community pioarduino PlatformIO fork."
+          echo ""
 
           LOG_RANGE="${LATEST_TAG:+${LATEST_TAG}..HEAD}"
           LOG_RANGE="${LOG_RANGE:-HEAD}"
@@ -89,7 +92,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.x'
+        python-version: '3.11'
 
     - name: Install PlatformIO
       run: |
@@ -105,7 +108,7 @@ jobs:
       run: |
         VERSION=${{ steps.get_version.outputs.VERSION }}
         ARTIFACT_DIR=".pio/build/release-artifacts"
-        ENVS=("esp32-wroom-32d" "esp32-c3-mini" "esp32-c3-supermini")
+        ENVS=("esp32-wroom-32d" "esp32-c3-mini" "esp32-c3-supermini" "esp32-c6-devkit")
 
         mkdir -p "${ARTIFACT_DIR}"
 
@@ -113,6 +116,7 @@ jobs:
           BUILD_DIR=".pio/build/${ENV}"
           CHIP="esp32"
           BOOTLOADER_OFFSET="0x1000"
+          EXPERIMENTAL_SUFFIX=""
 
           if [[ "${ENV}" == esp32-c3-* ]]; then
             CHIP="esp32c3"
@@ -120,17 +124,18 @@ jobs:
           elif [[ "${ENV}" == esp32-c6-* ]]; then
             CHIP="esp32c6"
             BOOTLOADER_OFFSET="0x0"
+            EXPERIMENTAL_SUFFIX="_experimental"
           fi
 
           echo "Building ${ENV}..."
           pio run -e "${ENV}"
           pio run -e "${ENV}" -t buildfs
 
-          cp "${BUILD_DIR}/firmware.bin" "${ARTIFACT_DIR}/upgrade_filaman_firmware_${ENV}_v${VERSION}.bin"
-          cp "${BUILD_DIR}/littlefs.bin" "${ARTIFACT_DIR}/upgrade_filaman_website_${ENV}_v${VERSION}.bin"
+          cp "${BUILD_DIR}/firmware.bin" "${ARTIFACT_DIR}/upgrade_filaman_firmware_${ENV}${EXPERIMENTAL_SUFFIX}_v${VERSION}.bin"
+          cp "${BUILD_DIR}/littlefs.bin" "${ARTIFACT_DIR}/upgrade_filaman_website_${ENV}${EXPERIMENTAL_SUFFIX}_v${VERSION}.bin"
 
           esptool.py --chip "${CHIP}" merge_bin \
-            -o "${ARTIFACT_DIR}/filaman_full_${ENV}_v${VERSION}.bin" \
+            -o "${ARTIFACT_DIR}/filaman_full_${ENV}${EXPERIMENTAL_SUFFIX}_v${VERSION}.bin" \
             "${BOOTLOADER_OFFSET}" "${BUILD_DIR}/bootloader.bin" \
             0x8000 "${BUILD_DIR}/partitions.bin" \
             0x10000 "${BUILD_DIR}/firmware.bin" \

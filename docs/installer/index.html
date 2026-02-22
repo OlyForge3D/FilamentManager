@@ -21,6 +21,9 @@
                 <div id="firmware-select-wrapper" class="firmware-select-wrapper" hidden>
                     <label for="firmware-select">Firmware target</label>
                     <select id="firmware-select"></select>
+                    <p id="experimental-support-note" class="experimental-note" hidden>
+                        ESP32-C6 support is currently experimental.
+                    </p>
                 </div>
                 <div class="install-button-wrapper">
                     <esp-web-install-button id="install-button">
@@ -61,6 +64,8 @@
 
         function parseFirmwareTarget(assetName) {
             const name = assetName.toLowerCase();
+            const isExperimental = name.includes("experimental");
+            const experimentalSuffix = isExperimental ? " (Experimental)" : "";
 
             if (name.includes("esp32-c3-supermini")) {
                 return { label: "ESP32-C3-SuperMini", chipFamily: "ESP32-C3" };
@@ -69,13 +74,13 @@
                 return { label: "ESP32-C3-Mini", chipFamily: "ESP32-C3" };
             }
             if (name.includes("esp32-c6-devkit")) {
-                return { label: "ESP32-C6-DevKit-1", chipFamily: "ESP32-C6" };
+                return { label: `ESP32-C6-DevKit-1${experimentalSuffix}`, chipFamily: "ESP32-C6" };
             }
             if (name.includes("esp32-wroom-32d")) {
                 return { label: "ESP32-WROOM-32D", chipFamily: "ESP32" };
             }
             if (name.includes("c6")) {
-                return { label: "ESP32-C6", chipFamily: "ESP32-C6" };
+                return { label: `ESP32-C6${experimentalSuffix}`, chipFamily: "ESP32-C6" };
             }
             if (name.includes("c3")) {
                 return { label: "ESP32-C3", chipFamily: "ESP32-C3" };
@@ -112,6 +117,7 @@
             const installButton = document.getElementById("install-button");
             const firmwareSelect = document.getElementById("firmware-select");
             const firmwareSelectWrapper = document.getElementById("firmware-select-wrapper");
+            const experimentalSupportNote = document.getElementById("experimental-support-note");
 
             try {
                 const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
@@ -129,7 +135,8 @@
                         name: asset.name,
                         url: asset.browser_download_url,
                         label: target.label,
-                        chipFamily: target.chipFamily
+                        chipFamily: target.chipFamily,
+                        experimental: asset.name.toLowerCase().includes("experimental")
                     };
                 });
 
@@ -149,6 +156,7 @@
                 } else {
                     firmwareSelectWrapper.hidden = true;
                 }
+                experimentalSupportNote.hidden = !firmwareOptions.some(f => f.experimental);
 
                 setManifest(installButton, release.tag_name, firmwareOptions[0]);
 

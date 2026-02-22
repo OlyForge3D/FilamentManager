@@ -89,6 +89,12 @@ header h1 {
     font-size: 0.9rem;
 }
 
+.experimental-note {
+    margin-top: 0.55rem;
+    font-size: 0.8rem;
+    color: #ffb3bf;
+}
+
 .install-button-wrapper {
     margin: 1.25rem 0;
 }
