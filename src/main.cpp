@@ -63,7 +63,8 @@ void setup() {
   // NFC Reader
   startNfc();
 
-  // Touch Sensor
+#ifndef DISABLE_SCALE
+  // Touch Sensor (only used with scale for tare function)
   pinMode(TTP223_PIN, INPUT_PULLUP);
   if (digitalRead(TTP223_PIN) == LOW) 
   {
@@ -74,6 +75,7 @@ void setup() {
   // Scale
   start_scale(touchSensorConnected);
   scaleTareRequest = true;
+#endif
 
   // Initialize WDT with 10 second timeout
   bool panic = true; // If true, WDT timeout triggers a system panic
@@ -131,12 +133,14 @@ const unsigned long debounceDelay = 500; // 500 ms debounce delay
 void loop() {
   unsigned long currentMillis = millis();
 
+#ifndef DISABLE_SCALE
   // Check touch sensor status
   if (touchSensorConnected && digitalRead(TTP223_PIN) == HIGH && currentMillis - lastButtonPress > debounceDelay) 
   {
     lastButtonPress = currentMillis;
     scaleTareRequest = true;
   }
+#endif
 
   // Regularly check WiFi connection
   if (intervalElapsed(currentMillis, lastWifiCheckTime, WIFI_CHECK_INTERVAL)) 

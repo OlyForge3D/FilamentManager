@@ -32,7 +32,7 @@ There are no unit tests or linters configured.
 Single-threaded main loop in `main.cpp` with FreeRTOS tasks for NFC reading (`nfc.cpp`), MQTT/Bambu communication (`bambu.cpp`), and scale reading (`scale.cpp`). Task core and priority assignments are in `config.cpp`.
 
 Key modules:
-- **nfc.cpp/h** — PN532 NFC reader via I2C. State machine (`nfcReaderStateType`: IDLE → READING → READ_SUCCESS/ERROR → WRITING → WRITE_SUCCESS/ERROR). Detects tag format automatically (OpenSpool JSON vs OpenPrintTag binary TLV vs raw spool ID).
+- **nfc.cpp/h** — PN532 NFC reader via software SPI (bit-banged GPIO, pins configurable at runtime via NVS). State machine (`nfcReaderStateType`: IDLE → READING → READ_SUCCESS/ERROR → WRITING → WRITE_SUCCESS/ERROR). Detects tag format automatically (OpenSpool JSON vs OpenPrintTag binary TLV vs raw spool ID).
 - **openprinttag.cpp/h** — OpenPrintTag binary TLV encoder/decoder (Prusa's NFC standard). Field keys defined as `OPTFieldKey` enum.
 - **api.cpp/h** — Spoolman REST API client, Moonraker/Klipper integration, PrintFarmer webhooks/heartbeat. State machine (`spoolmanApiStateType`: INIT → IDLE → TRANSMITTING).
 - **bambu.cpp/h** — Bambu Lab AMS MQTT client with TLS (cert in `bambu_cert.h`). Auto-send spool data to AMS slots.

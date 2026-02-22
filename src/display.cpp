@@ -1,8 +1,27 @@
 #include "display.h"
 #include "api.h"
+#include "main.h"
+
+#ifdef DISABLE_DISPLAY
+
+// Stub implementations when display is disabled
+bool wifiOn = false;
+
+void setupDisplay() {}
+void oledclearline() {}
+void oledcleardata() {}
+int oled_center_h(const String &text) { return 0; }
+int oled_center_v(const String &text) { return 0; }
+void oledShowProgressBar(const uint8_t step, const uint8_t numSteps, const char* largeText, const char* statusMessage) {}
+void oledShowWeight(uint16_t weight) {}
+void oledShowMessage(const String &message, uint8_t size) {}
+void oledShowTopRow() {}
+void oledShowIcon(const char* icon) {}
+
+#else
+
 #include <vector>
 #include "icons.h"
-#include "main.h"
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
@@ -265,3 +284,5 @@ void oledShowWeight(uint16_t weight) {
     display.print(" g");
     display.display();
 }
+
+#endif // DISABLE_DISPLAY

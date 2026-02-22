@@ -108,7 +108,7 @@ jobs:
       run: |
         VERSION=${{ steps.get_version.outputs.VERSION }}
         ARTIFACT_DIR=".pio/build/release-artifacts"
-        ENVS=("esp32-wroom-32d" "esp32-c3-mini" "esp32-c3-supermini" "esp32-c6-devkit")
+        ENVS=("esp32-wroom-32d" "esp32-wroom-32d-lite" "esp32-c3-mini" "esp32-c3-mini-lite" "esp32-c3-supermini" "esp32-c3-supermini-lite" "esp32-c6-devkit" "esp32-c6-devkit-lite")
 
         mkdir -p "${ARTIFACT_DIR}"
 

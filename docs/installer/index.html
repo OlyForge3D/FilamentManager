@@ -24,6 +24,9 @@
                     <p id="experimental-support-note" class="experimental-note" hidden>
                         ESP32-C6 support is currently experimental.
                     </p>
+                    <p id="lite-support-note" class="experimental-note" hidden>
+                        <strong>Lite</strong> variants exclude scale and OLED display support (NFC-only).
+                    </p>
                 </div>
                 <div id="board-preview" class="board-preview" hidden>
                     <p class="board-preview-title">Selected controller preview</p>
@@ -92,28 +95,30 @@
         function parseFirmwareTarget(assetName) {
             const name = assetName.toLowerCase();
             const isExperimental = name.includes("experimental");
+            const isLite = name.includes("-lite");
             const experimentalSuffix = isExperimental ? " (Experimental)" : "";
+            const liteSuffix = isLite ? " Lite" : "";
 
             if (name.includes("esp32-c3-supermini")) {
-                return { label: "ESP32-C3-SuperMini", chipFamily: "ESP32-C3", key: "esp32-c3-supermini" };
+                return { label: `ESP32-C3-SuperMini${liteSuffix}`, chipFamily: "ESP32-C3", key: "esp32-c3-supermini" };
             }
             if (name.includes("esp32-c3-mini")) {
-                return { label: "ESP32-C3-Mini", chipFamily: "ESP32-C3", key: "esp32-c3-mini" };
+                return { label: `ESP32-C3-Mini${liteSuffix}`, chipFamily: "ESP32-C3", key: "esp32-c3-mini" };
             }
             if (name.includes("esp32-c6-devkit")) {
-                return { label: `ESP32-C6-DevKit-1${experimentalSuffix}`, chipFamily: "ESP32-C6", key: "esp32-c6-devkit" };
+                return { label: `ESP32-C6-DevKit-1${liteSuffix}${experimentalSuffix}`, chipFamily: "ESP32-C6", key: "esp32-c6-devkit" };
             }
             if (name.includes("esp32-wroom-32d")) {
-                return { label: "ESP32-WROOM-32D", chipFamily: "ESP32", key: "esp32-wroom-32d" };
+                return { label: `ESP32-WROOM-32D${liteSuffix}`, chipFamily: "ESP32", key: "esp32-wroom-32d" };
             }
             if (name.includes("c6")) {
-                return { label: `ESP32-C6${experimentalSuffix}`, chipFamily: "ESP32-C6", key: "esp32-c6-devkit" };
+                return { label: `ESP32-C6${liteSuffix}${experimentalSuffix}`, chipFamily: "ESP32-C6", key: "esp32-c6-devkit" };
             }
             if (name.includes("c3")) {
-                return { label: "ESP32-C3", chipFamily: "ESP32-C3", key: "esp32-c3-mini" };
+                return { label: `ESP32-C3${liteSuffix}`, chipFamily: "ESP32-C3", key: "esp32-c3-mini" };
             }
 
-            return { label: "ESP32", chipFamily: "ESP32", key: "esp32-wroom-32d" };
+            return { label: `ESP32${liteSuffix}`, chipFamily: "ESP32", key: "esp32-wroom-32d" };
         }
 
         function setManifest(installButton, version, firmware) {
@@ -171,6 +176,8 @@
 
             firmwareSelectWrapper.hidden = firmwareOptions.length <= 1;
             experimentalSupportNote.hidden = !firmwareOptions.some(f => f.experimental);
+            const liteSupportNote = document.getElementById("lite-support-note");
+            liteSupportNote.hidden = !firmwareOptions.some(f => f.name.toLowerCase().includes("-lite"));
 
             setManifest(installButton, version, firmwareOptions[0]);
             updateBoardPreview(firmwareOptions[0]);

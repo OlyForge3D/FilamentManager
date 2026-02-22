@@ -6,7 +6,6 @@
 ## Attribution
 
 FilamentManager is derived from [FilaMan](https://github.com/ManuelW77/Filaman) by Manuel Weiser.
-To satisfy MIT license requirements, the original copyright and permission notice are retained in [LICENSE.txt](LICENSE.txt).
 
 ## What FilamentManager Adds
 
@@ -47,11 +46,10 @@ To satisfy MIT license requirements, the original copyright and permission notic
 
 ### Hardware Features
 
-- **Weight measurement** — HX711 load cell for precise spool weighing
-- **NFC read/write** — PN532 module via I2C
-- **OLED display** — 128×64 SSD1306 for status display
+- **NFC read/write** — PN532 module via software SPI
 - **WiFi** — WiFiManager captive portal for network setup
 - **OTA updates** — firmware and filesystem updates via web UI
+- **Optional peripherals** — weight measurement (HX711), OLED display (SSD1306), touch tare button — see [Optional Features](OPTIONAL_FEATURES.md)
 
 ## Manufacturer Tags Support
 
@@ -69,54 +67,40 @@ For the full format, examples, and implementation details: [Manufacturer Tags Do
 
 ## Hardware Requirements
 
-### Components (Affiliate Links)
-- **ESP32 Development Board:** Any ESP32 variant.
+### Core Components (Affiliate Links)
+- **ESP32 Development Board** — Any ESP32 variant (WROOM-32D, C3, C6)
 [Amazon Link](https://amzn.to/3FHea6D)
-- **HX711 5kg Load Cell Amplifier:** For weight measurement.
-[Amazon Link](https://amzn.to/4ja1KTe)
-- **OLED 0.96 Zoll I2C white/yellow Display:** 128x64 SSD1306.
-[Amazon Link](https://amzn.to/445aaa9)
-- **PN532 NFC NXP RFID-Modul V3:** For NFC tag operations.
+- **PN532 NFC Module** — V3 with SPI support
 [Amazon Link](https://amzn.eu/d/gy9vaBX)
-- **NFC Tags NTAG213 NTAG215:** RFID Tag
+- **NFC Tags** — NTAG213, NTAG215, or NTAG216
 [Amazon Link](https://amzn.to/3E071xO)
-- **TTP223 Touch Sensor (optional):** For reTARE per Button/Touch
-[Amazon Link](https://amzn.to/4hTChMK)
+
+For optional hardware (scale, OLED display, touch sensor), see [Optional Features](OPTIONAL_FEATURES.md).
 
 
-### Pin Configuration
+### Pin Configuration (PN532)
 
-Default PN532 wiring is **software SPI** and varies by firmware target (these defaults can be changed in the Hardware page and are stored in NVS):
+Default PN532 wiring uses **software SPI** (bit-banged GPIO) and varies by firmware target. Any GPIO pin can be used — defaults can be changed via the Hardware page without reflashing.
 
-| Firmware target | PN532 SCK | PN532 MISO | PN532 MOSI | PN532 SS | PN532 IRQ | PN532 RESET |
-|---|---:|---:|---:|---:|---:|---:|
+#### Power Connections (all boards)
+
+| ESP32 | PN532 |
+|:---:|:---:|
+| 3.3V | VCC |
+| GND | GND |
+
+#### SPI Signal Connections
+
+| Firmware Target | SCK | MISO | MOSI | SS | IRQ | RESET |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
 | ESP32-WROOM-32D | 18 | 19 | 23 | 5 | 4 | 27 |
 | ESP32-C3-Mini | 4 | 5 | 6 | 7 | 10 | 3 |
 | ESP32-C3-SuperMini | 4 | 5 | 6 | 7 | 10 | 3 |
 | ESP32-C6-DevKit-1 | 6 | 2 | 7 | 18 | 19 | 20 |
 
-Shared defaults currently used by the firmware:
+**Important:** Set the PN532 DIP switches to SPI mode.
 
-| Component | Default GPIO | Notes |
-|---|---:|---|
-| HX711 DOUT | 16 | Shared across targets in current firmware |
-| HX711 SCK | 17 | Shared across targets in current firmware |
-| TTP223 I/O (optional) | 25 | Primarily used on ESP32-WROOM-32D style wiring |
-| OLED I2C | board default `Wire` pins | On ESP32-WROOM-32D this is typically SDA=21, SCL=22 |
-
-**Make sure PN532 DIP switches are set to SPI mode.**  
-**Use the 3V pin from the ESP for the touch sensor**
-
-![Wiring](./img/Schaltplan.png)
-
-![myWiring](./img/IMG_2589.jpeg)
-![myWiring](./img/IMG_2590.jpeg)
-
-*The load cell is connected to most HX711 modules as follows:  
-E+ red  
-E- black  
-A- white  
-A+ green*
+For optional hardware pin configurations (scale, display, touch sensor), see [Optional Features](OPTIONAL_FEATURES.md).
 
 ## Software Dependencies
 
@@ -126,21 +110,17 @@ A+ green*
 - `ArduinoJson`: JSON parsing and creation
 - `PubSubClient`: MQTT communication
 - `Adafruit_PN532`: NFC functionality
-- `Adafruit_SSD1306`: OLED display control
-- `HX711`: Load cell communication
 
 ### Installation
 
 ## Prerequisites
 - **Software:**
-  - [PlatformIO](https://platformio.org/) in VS Code
+  - [PlatformIO](https://platformio.org/) in VS Code (for building from source)
   - [Spoolman](https://github.com/Donkie/Spoolman) instance
 - **Hardware:**
   - ESP32 Development Board
-  - HX711 Load Cell Amplifier
-  - Load Cell (weight sensor)
-  - OLED Display (128x64 SSD1306)
   - PN532 NFC Module
+  - NFC tags (NTAG213/215/216)
   - Connecting wires
 
 ## Important Note
