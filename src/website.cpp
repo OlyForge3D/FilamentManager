@@ -509,13 +509,30 @@ void setupWebserver(AsyncWebServer &server) {
             request->send(400, "application/json", "{\"success\":false,\"error\":\"Missing pin parameters\"}");
             return;
         }
+
+        int vals[6] = {
+            request->getParam("sck")->value().toInt(),
+            request->getParam("miso")->value().toInt(),
+            request->getParam("mosi")->value().toInt(),
+            request->getParam("ss")->value().toInt(),
+            request->getParam("irq")->value().toInt(),
+            request->getParam("reset")->value().toInt()
+        };
+        for (int i = 0; i < 6; i++) {
+            if (vals[i] < 0 || vals[i] > 48) {
+                request->send(400, "application/json",
+                    "{\"success\":false,\"error\":\"Pin values must be 0-48\"}");
+                return;
+            }
+        }
+
         Pn532Pins newPins;
-        newPins.sck   = request->getParam("sck")->value().toInt();
-        newPins.miso  = request->getParam("miso")->value().toInt();
-        newPins.mosi  = request->getParam("mosi")->value().toInt();
-        newPins.ss    = request->getParam("ss")->value().toInt();
-        newPins.irq   = request->getParam("irq")->value().toInt();
-        newPins.reset = request->getParam("reset")->value().toInt();
+        newPins.sck   = (uint8_t)vals[0];
+        newPins.miso  = (uint8_t)vals[1];
+        newPins.mosi  = (uint8_t)vals[2];
+        newPins.ss    = (uint8_t)vals[3];
+        newPins.irq   = (uint8_t)vals[4];
+        newPins.reset = (uint8_t)vals[5];
 
         if (!savePinConfig(newPins)) {
             request->send(400, "application/json", "{\"success\":false,\"error\":\"Validation failed – all pins must be unique\"}");

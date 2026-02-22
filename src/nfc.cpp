@@ -14,9 +14,8 @@
 //Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 // PN532 in software-SPI mode – initialised in startNfc() with runtime pins
 Adafruit_PN532 *pNfc = nullptr;
-// Convenience reference set after allocation (avoids rewriting every call site)
-// MUST NOT be used before startNfc().
-static Adafruit_PN532 *nfcPtr() { return pNfc; }
+// Convenience macro: avoids rewriting every call site from nfc.xxx to pNfc->xxx
+// Only valid after startNfc() has been called.
 #define nfc (*pNfc)
 
 TaskHandle_t RfidReaderTask;
@@ -2244,6 +2243,12 @@ void scanRfidTask(void * parameter) {
 
 void startNfc() {
   oledShowProgressBar(5, 7, DISPLAY_BOOT_TEXT, "NFC init");
+
+  // Stop any running RFID task before re-creating the PN532 object
+  if (RfidReaderTask != NULL) {
+    vTaskDelete(RfidReaderTask);
+    RfidReaderTask = NULL;
+  }
 
   // Allocate PN532 in software-SPI mode using the configured pins
   if (pNfc) { delete pNfc; pNfc = nullptr; }
