@@ -1,10 +1,14 @@
 {
-  "version": "v2.1.2",
-  "generated_at": "2026-02-22T17:52:56Z",
+  "version": "v2.1.3",
+  "generated_at": "2026-02-22T19:35:49Z",
   "assets": [
-    "filaman_full_esp32-c3-mini_v2.1.2.bin",
-    "filaman_full_esp32-c3-supermini_v2.1.2.bin",
-    "filaman_full_esp32-c6-devkit_experimental_v2.1.2.bin",
-    "filaman_full_esp32-wroom-32d_v2.1.2.bin"
+    "filaman_full_esp32-c3-mini-lite_v2.1.3.bin",
+    "filaman_full_esp32-c3-mini_v2.1.3.bin",
+    "filaman_full_esp32-c3-supermini-lite_v2.1.3.bin",
+    "filaman_full_esp32-c3-supermini_v2.1.3.bin",
+    "filaman_full_esp32-c6-devkit-lite_experimental_v2.1.3.bin",
+    "filaman_full_esp32-c6-devkit_experimental_v2.1.3.bin",
+    "filaman_full_esp32-wroom-32d-lite_v2.1.3.bin",
+    "filaman_full_esp32-wroom-32d_v2.1.3.bin"
   ]
 }
