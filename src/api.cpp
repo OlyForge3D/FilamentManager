@@ -1580,11 +1580,15 @@ String fetchPrintFarmerPrinters(const String& url, const String& apiKey) {
 
     auto appendPrinters = [&printersOut](JsonArray printers) {
         for (JsonObject printer : printers) {
+            String backend = printer["backend"] | "";
+            if (backend.length() == 0) backend = printer["backendName"] | "";
+            if (backend.length() == 0) backend = printer["backend"]["name"] | "";
+            if (backend.length() == 0) backend = printer["backend"]["id"] | "";
+
             JsonObject outPrinter = printersOut.add<JsonObject>();
             outPrinter["id"] = printer["id"] | "";
             outPrinter["name"] = printer["name"] | "Unnamed printer";
-            outPrinter["state"] = printer["state"] | "";
-            outPrinter["isOnline"] = printer["isOnline"] | false;
+            outPrinter["backend"] = backend;
         }
     };
 

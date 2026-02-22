@@ -267,8 +267,8 @@
             printers.forEach(printer => {
                 const option = document.createElement('option');
                 option.value = printer.id || '';
-                const onlineSuffix = printer.isOnline ? ' (Online)' : '';
-                option.textContent = `${printer.name || printer.id}${onlineSuffix}`;
+                const backendSuffix = printer.backend ? ` [${printer.backend}]` : '';
+                option.textContent = `${printer.name || printer.id}${backendSuffix}`;
                 printerSelect.appendChild(option);
             });
 
@@ -294,7 +294,7 @@
                     document.getElementById('printFarmerPrinterId').value = data.printfarmer.printerId || '';
                     if (data.printfarmer.printerId) {
                         setPrintFarmerPrinterOptions(
-                            [{ id: data.printfarmer.printerId, name: `Saved printer (${data.printfarmer.printerId})`, isOnline: false }],
+                            [{ id: data.printfarmer.printerId, name: `Saved printer (${data.printfarmer.printerId})`, backend: '' }],
                             data.printfarmer.printerId
                         );
                     }
