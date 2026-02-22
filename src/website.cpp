@@ -501,27 +501,39 @@ void setupWebserver(AsyncWebServer &server) {
         request->send(200, "application/json", jsonResponse);
     });
 
-    // ── PUT /api/v1/pins (via GET with query params for simplicity) ──
-    server.on("/api/v1/pins/update", HTTP_GET, [](AsyncWebServerRequest *request){
-        if (!request->hasParam("sck") || !request->hasParam("miso") ||
-            !request->hasParam("mosi") || !request->hasParam("ss") ||
-            !request->hasParam("irq") || !request->hasParam("reset")) {
-            request->send(400, "application/json", "{\"success\":false,\"error\":\"Missing pin parameters\"}");
-            return;
-        }
+    // ── POST /api/v1/pins/update ──
+    server.on("/api/v1/pins/update", HTTP_POST, [](AsyncWebServerRequest *request){
+        auto parsePinValue = [request](const char *name, int &out) -> bool {
+            AsyncWebParameter *param = nullptr;
+            if (request->hasParam(name, true)) {
+                param = request->getParam(name, true);
+            } else if (request->hasParam(name)) {
+                param = request->getParam(name);
+            } else {
+                return false;
+            }
 
-        int vals[6] = {
-            request->getParam("sck")->value().toInt(),
-            request->getParam("miso")->value().toInt(),
-            request->getParam("mosi")->value().toInt(),
-            request->getParam("ss")->value().toInt(),
-            request->getParam("irq")->value().toInt(),
-            request->getParam("reset")->value().toInt()
+            String value = param->value();
+            if (value.length() == 0) return false;
+
+            int parsed = 0;
+            for (size_t i = 0; i < value.length(); i++) {
+                char c = value.charAt(i);
+                if (c < '0' || c > '9') return false;
+                parsed = (parsed * 10) + (c - '0');
+                if (parsed > 255) return false;
+            }
+
+            out = parsed;
+            return true;
         };
+
+        int vals[6];
+        const char* names[6] = {"sck", "miso", "mosi", "ss", "irq", "reset"};
         for (int i = 0; i < 6; i++) {
-            if (vals[i] < 0 || vals[i] > 48) {
+            if (!parsePinValue(names[i], vals[i])) {
                 request->send(400, "application/json",
-                    "{\"success\":false,\"error\":\"Pin values must be 0-48\"}");
+                    "{\"success\":false,\"error\":\"Invalid pin parameters - values must be numeric\"}");
                 return;
             }
         }
@@ -535,7 +547,7 @@ void setupWebserver(AsyncWebServer &server) {
         newPins.reset = (uint8_t)vals[5];
 
         if (!savePinConfig(newPins)) {
-            request->send(400, "application/json", "{\"success\":false,\"error\":\"Validation failed – all pins must be unique\"}");
+            request->send(400, "application/json", "{\"success\":false,\"error\":\"Validation failed - pins must be unique and between 0-48\"}");
             return;
         }
         request->send(200, "application/json", "{\"success\":true,\"message\":\"Pins saved. Reboot to apply.\"}");

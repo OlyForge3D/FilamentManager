@@ -68,16 +68,47 @@ uint8_t scaleTaskPrio = 1;
 // ***** Task Prios
 
 // ── Pin configuration persistence ──
+static bool isValidPinConfig(const Pn532Pins &pins) {
+  uint8_t arr[6] = { pins.sck, pins.miso, pins.mosi, pins.ss, pins.irq, pins.reset };
+  for (int i = 0; i < 6; i++) {
+    if (arr[i] > 48) return false;
+  }
+  for (int i = 0; i < 6; i++) {
+    for (int j = i + 1; j < 6; j++) {
+      if (arr[i] == arr[j]) return false;
+    }
+  }
+  return true;
+}
+
 void loadPinConfig() {
   Preferences prefs;
   prefs.begin(NVS_NAMESPACE_PINS, true); // read-only
-  pn532Pins.sck   = prefs.getUChar(NVS_KEY_PN532_SCK,   DEFAULT_PN532_SCK);
-  pn532Pins.miso  = prefs.getUChar(NVS_KEY_PN532_MISO,  DEFAULT_PN532_MISO);
-  pn532Pins.mosi  = prefs.getUChar(NVS_KEY_PN532_MOSI,  DEFAULT_PN532_MOSI);
-  pn532Pins.ss    = prefs.getUChar(NVS_KEY_PN532_SS,     DEFAULT_PN532_SS);
-  pn532Pins.irq   = prefs.getUChar(NVS_KEY_PN532_IRQ,   DEFAULT_PN532_IRQ);
-  pn532Pins.reset = prefs.getUChar(NVS_KEY_PN532_RESET,  DEFAULT_PN532_RESET);
+  Pn532Pins loadedPins = {
+    prefs.getUChar(NVS_KEY_PN532_SCK,   DEFAULT_PN532_SCK),
+    prefs.getUChar(NVS_KEY_PN532_MISO,  DEFAULT_PN532_MISO),
+    prefs.getUChar(NVS_KEY_PN532_MOSI,  DEFAULT_PN532_MOSI),
+    prefs.getUChar(NVS_KEY_PN532_SS,    DEFAULT_PN532_SS),
+    prefs.getUChar(NVS_KEY_PN532_IRQ,   DEFAULT_PN532_IRQ),
+    prefs.getUChar(NVS_KEY_PN532_RESET, DEFAULT_PN532_RESET)
+  };
   prefs.end();
+
+  if (!isValidPinConfig(loadedPins)) {
+    Serial.printf("Invalid PN532 pin config in NVS (SCK=%u MISO=%u MOSI=%u SS=%u IRQ=%u RST=%u). Using defaults.\n",
+      loadedPins.sck, loadedPins.miso, loadedPins.mosi,
+      loadedPins.ss, loadedPins.irq, loadedPins.reset);
+    pn532Pins = {
+      DEFAULT_PN532_SCK,
+      DEFAULT_PN532_MISO,
+      DEFAULT_PN532_MOSI,
+      DEFAULT_PN532_SS,
+      DEFAULT_PN532_IRQ,
+      DEFAULT_PN532_RESET
+    };
+  } else {
+    pn532Pins = loadedPins;
+  }
 
   Serial.printf("PN532 pins: SCK=%u MISO=%u MOSI=%u SS=%u IRQ=%u RST=%u\n",
     pn532Pins.sck, pn532Pins.miso, pn532Pins.mosi,
@@ -85,13 +116,7 @@ void loadPinConfig() {
 }
 
 bool savePinConfig(const Pn532Pins &pins) {
-  // Basic validation: all six pins must be different
-  uint8_t arr[6] = { pins.sck, pins.miso, pins.mosi, pins.ss, pins.irq, pins.reset };
-  for (int i = 0; i < 6; i++) {
-    for (int j = i + 1; j < 6; j++) {
-      if (arr[i] == arr[j]) return false;
-    }
-  }
+  if (!isValidPinConfig(pins)) return false;
 
   Preferences prefs;
   prefs.begin(NVS_NAMESPACE_PINS, false);

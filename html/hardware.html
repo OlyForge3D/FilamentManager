@@ -71,9 +71,13 @@
 
         function savePins() {
             const ids = ['sck','miso','mosi','ss','irq','reset'];
-            const params = ids.map(id => id + '=' + document.getElementById('pin_' + id).value).join('&');
+            const params = ids.map(id => id + '=' + encodeURIComponent(document.getElementById('pin_' + id).value)).join('&');
 
-            fetch('/api/v1/pins/update?' + params)
+            fetch('/api/v1/pins/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params
+            })
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {

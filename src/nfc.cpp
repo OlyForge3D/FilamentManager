@@ -14,9 +14,16 @@
 //Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 // PN532 in software-SPI mode – initialised in startNfc() with runtime pins
 Adafruit_PN532 *pNfc = nullptr;
-// Convenience macro: avoids rewriting every call site from nfc.xxx to pNfc->xxx
-// Only valid after startNfc() has been called.
-#define nfc (*pNfc)
+static Adafruit_PN532 &getNfc() {
+  if (pNfc == nullptr) {
+    static Adafruit_PN532 fallbackNfc(DEFAULT_PN532_SCK, DEFAULT_PN532_MISO,
+                                      DEFAULT_PN532_MOSI, DEFAULT_PN532_SS);
+    Serial.println("WARNING: NFC accessed before initialization");
+    return fallbackNfc;
+  }
+  return *pNfc;
+}
+#define nfc getNfc()
 
 TaskHandle_t RfidReaderTask;
 
