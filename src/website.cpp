@@ -151,8 +151,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 
         else if (doc["type"] == "fetchPrintFarmerPrinters") {
             String url = doc["payload"]["url"].as<String>();
-            String apiKey = doc["payload"]["apiKey"].as<String>();
-            String response = fetchPrintFarmerPrinters(url, apiKey);
+            String response = fetchPrintFarmerPrinters(url);
             ws.text(client->id(), response);
         }
 

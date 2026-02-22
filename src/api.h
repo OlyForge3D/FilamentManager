@@ -66,7 +66,7 @@ extern String printFarmerPrinterId;
 bool updateSpoolPrintFarmer(int spoolId);
 bool savePrintFarmerSettings(const String& url, const String& apiKey, const String& printerId);
 String loadPrintFarmerUrl();
-String fetchPrintFarmerPrinters(const String& url, const String& apiKey);
+String fetchPrintFarmerPrinters(const String& url);
 bool sendPrintFarmerHeartbeat();
 bool sendPrintFarmerScanEvent(int spoolId, const String& tagFormat, const String& materialType, const String& brandName);
 

@@ -1520,7 +1520,7 @@ String loadMoonrakerUrl() {
 // PrintFarmer Integration
 // ============================================================================
 
-String fetchPrintFarmerPrinters(const String& url, const String& apiKey) {
+String fetchPrintFarmerPrinters(const String& url) {
     JsonDocument responseDoc;
     responseDoc["type"] = "fetchPrintFarmerPrinters";
     responseDoc["success"] = false;
@@ -1539,19 +1539,10 @@ String fetchPrintFarmerPrinters(const String& url, const String& apiKey) {
         baseUrl.remove(baseUrl.length() - 1);
     }
 
-    String endpoint = baseUrl + "/api/printers";
+    String endpoint = baseUrl + "/api/filaman/printers";
     HTTPClient http;
     http.begin(endpoint);
     http.addHeader("Accept", "application/json");
-
-    String authHeader = apiKey;
-    authHeader.trim();
-    if (authHeader.length() > 0) {
-        if (!authHeader.startsWith("Bearer ")) {
-            authHeader = "Bearer " + authHeader;
-        }
-        http.addHeader("Authorization", authHeader);
-    }
 
     Serial.println("PrintFarmer: fetching printers from " + endpoint);
     int httpCode = http.GET();

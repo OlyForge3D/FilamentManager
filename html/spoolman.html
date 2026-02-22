@@ -225,7 +225,7 @@
                     <input type="text" id="printFarmerUrl" placeholder="http://ip-of-printfarmer:5245">
                 </div>
                 <div class="input-group">
-                    <label for="printFarmerApiKey">API Key / Token:</label>
+                    <label for="printFarmerApiKey">API Key / Token (for active spool updates):</label>
                     <input type="text" id="printFarmerApiKey" placeholder="Bearer token">
                 </div>
                 <div class="input-group">
@@ -326,7 +326,6 @@
         function fetchPrintFarmerPrinters() {
             const statusMessage = document.getElementById('printFarmerStatusMessage');
             const url = document.getElementById('printFarmerUrl').value.trim();
-            const apiKey = document.getElementById('printFarmerApiKey').value.trim();
             const selectedPrinterId = document.getElementById('printFarmerPrinterId').value.trim();
 
             if (!url) {
@@ -340,7 +339,7 @@
             ws.onopen = function() {
                 ws.send(JSON.stringify({
                     type: 'fetchPrintFarmerPrinters',
-                    payload: { url, apiKey }
+                    payload: { url }
                 }));
             };
 
