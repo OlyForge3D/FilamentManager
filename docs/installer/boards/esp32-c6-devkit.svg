@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 200" role="img" aria-labelledby="title desc">
+  <title id="title">ESP32-C6-DevKit-1 board</title>
+  <desc id="desc">Illustration of an ESP32-C6-DevKit-1 board.</desc>
+  <rect width="360" height="200" fill="#0f1a2f"/>
+  <rect x="70" y="24" width="220" height="152" rx="10" fill="#2b5f92" stroke="#3f84ca" stroke-width="2"/>
+  <rect x="160" y="18" width="40" height="12" rx="3" fill="#d7d9dd"/>
+  <rect x="112" y="36" width="136" height="42" rx="6" fill="#bec2ca"/>
+  <rect x="122" y="44" width="116" height="26" rx="4" fill="#5f6673"/>
+  <rect x="116" y="84" width="128" height="18" rx="3" fill="#2f3441"/>
+  <rect x="140" y="108" width="80" height="24" rx="3" fill="#3b4454"/>
+  <path d="M250 104c7-7 7-18 0-25" fill="none" stroke="#dce2eb" stroke-width="2"/>
+  <path d="M257 110c11-11 11-30 0-41" fill="none" stroke="#dce2eb" stroke-width="2"/>
+  <g fill="#d8dbdf">
+    <rect x="62" y="36" width="8" height="8"/><rect x="62" y="52" width="8" height="8"/><rect x="62" y="68" width="8" height="8"/>
+    <rect x="62" y="84" width="8" height="8"/><rect x="62" y="100" width="8" height="8"/><rect x="62" y="116" width="8" height="8"/>
+    <rect x="62" y="132" width="8" height="8"/><rect x="62" y="148" width="8" height="8"/>
+    <rect x="290" y="36" width="8" height="8"/><rect x="290" y="52" width="8" height="8"/><rect x="290" y="68" width="8" height="8"/>
+    <rect x="290" y="84" width="8" height="8"/><rect x="290" y="100" width="8" height="8"/><rect x="290" y="116" width="8" height="8"/>
+    <rect x="290" y="132" width="8" height="8"/><rect x="290" y="148" width="8" height="8"/>
+  </g>
+  <text x="180" y="188" text-anchor="middle" fill="#d9dbe1" font-family="Arial, sans-serif" font-size="18">ESP32-C6-DevKit-1</text>
+</svg>

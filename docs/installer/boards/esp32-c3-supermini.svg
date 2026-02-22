@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 200" role="img" aria-labelledby="title desc">
+  <title id="title">ESP32-C3-SuperMini board</title>
+  <desc id="desc">Illustration of an ESP32-C3-SuperMini board.</desc>
+  <rect width="360" height="200" fill="#0f1a2f"/>
+  <rect x="64" y="54" width="232" height="94" rx="12" fill="#6d3fa2" stroke="#8d61c1" stroke-width="2"/>
+  <rect x="168" y="48" width="24" height="10" rx="3" fill="#d7d9dd"/>
+  <rect x="122" y="66" width="116" height="32" rx="6" fill="#bec3cb"/>
+  <rect x="130" y="72" width="100" height="20" rx="4" fill="#5f6571"/>
+  <rect x="160" y="104" width="40" height="20" rx="3" fill="#2f3441"/>
+  <g fill="#d8dbdf">
+    <rect x="74" y="46" width="8" height="8"/><rect x="90" y="46" width="8" height="8"/><rect x="106" y="46" width="8" height="8"/>
+    <rect x="122" y="46" width="8" height="8"/><rect x="138" y="46" width="8" height="8"/><rect x="154" y="46" width="8" height="8"/>
+    <rect x="170" y="46" width="8" height="8"/><rect x="186" y="46" width="8" height="8"/><rect x="202" y="46" width="8" height="8"/>
+    <rect x="218" y="46" width="8" height="8"/><rect x="234" y="46" width="8" height="8"/><rect x="250" y="46" width="8" height="8"/>
+    <rect x="266" y="46" width="8" height="8"/>
+    <rect x="74" y="148" width="8" height="8"/><rect x="90" y="148" width="8" height="8"/><rect x="106" y="148" width="8" height="8"/>
+    <rect x="122" y="148" width="8" height="8"/><rect x="138" y="148" width="8" height="8"/><rect x="154" y="148" width="8" height="8"/>
+    <rect x="170" y="148" width="8" height="8"/><rect x="186" y="148" width="8" height="8"/><rect x="202" y="148" width="8" height="8"/>
+    <rect x="218" y="148" width="8" height="8"/><rect x="234" y="148" width="8" height="8"/><rect x="250" y="148" width="8" height="8"/>
+    <rect x="266" y="148" width="8" height="8"/>
+  </g>
+  <text x="180" y="188" text-anchor="middle" fill="#d9dbe1" font-family="Arial, sans-serif" font-size="18">ESP32-C3-SuperMini</text>
+</svg>

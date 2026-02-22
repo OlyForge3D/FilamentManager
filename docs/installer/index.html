@@ -25,6 +25,11 @@
                         ESP32-C6 support is currently experimental.
                     </p>
                 </div>
+                <div id="board-preview" class="board-preview" hidden>
+                    <p class="board-preview-title">Selected controller preview</p>
+                    <img id="board-preview-image" class="board-preview-image" alt="">
+                    <p id="board-preview-caption" class="board-preview-caption"></p>
+                </div>
                 <div class="install-button-wrapper">
                     <esp-web-install-button id="install-button">
                         <span slot="unsupported">
@@ -61,6 +66,28 @@
     <script>
         const REPO = "OlyForge3D/FilamentManager";
         let currentManifestUrl = null;
+        const BOARD_PREVIEWS = {
+            "esp32-wroom-32d": {
+                image: "boards/esp32-wroom-32d.svg",
+                alt: "ESP32-WROOM-32D dev board illustration",
+                caption: "ESP32-WROOM-32D: common 38-pin ESP32 DevKit style board."
+            },
+            "esp32-c3-mini": {
+                image: "boards/esp32-c3-mini.svg",
+                alt: "ESP32-C3-Mini dev board illustration",
+                caption: "ESP32-C3-Mini: compact RISC-V board, often labeled C3-DevKitM-1."
+            },
+            "esp32-c3-supermini": {
+                image: "boards/esp32-c3-supermini.svg",
+                alt: "ESP32-C3-SuperMini board illustration",
+                caption: "ESP32-C3-SuperMini: very small C3 board with dual-side pin headers."
+            },
+            "esp32-c6-devkit": {
+                image: "boards/esp32-c6-devkit.svg",
+                alt: "ESP32-C6-DevKit-1 board illustration",
+                caption: "ESP32-C6-DevKit-1: Wi-Fi 6 / BLE / 802.15.4 capable board (experimental firmware support)."
+            }
+        };
 
         function parseFirmwareTarget(assetName) {
             const name = assetName.toLowerCase();
@@ -68,25 +95,25 @@
             const experimentalSuffix = isExperimental ? " (Experimental)" : "";
 
             if (name.includes("esp32-c3-supermini")) {
-                return { label: "ESP32-C3-SuperMini", chipFamily: "ESP32-C3" };
+                return { label: "ESP32-C3-SuperMini", chipFamily: "ESP32-C3", key: "esp32-c3-supermini" };
             }
             if (name.includes("esp32-c3-mini")) {
-                return { label: "ESP32-C3-Mini", chipFamily: "ESP32-C3" };
+                return { label: "ESP32-C3-Mini", chipFamily: "ESP32-C3", key: "esp32-c3-mini" };
             }
             if (name.includes("esp32-c6-devkit")) {
-                return { label: `ESP32-C6-DevKit-1${experimentalSuffix}`, chipFamily: "ESP32-C6" };
+                return { label: `ESP32-C6-DevKit-1${experimentalSuffix}`, chipFamily: "ESP32-C6", key: "esp32-c6-devkit" };
             }
             if (name.includes("esp32-wroom-32d")) {
-                return { label: "ESP32-WROOM-32D", chipFamily: "ESP32" };
+                return { label: "ESP32-WROOM-32D", chipFamily: "ESP32", key: "esp32-wroom-32d" };
             }
             if (name.includes("c6")) {
-                return { label: `ESP32-C6${experimentalSuffix}`, chipFamily: "ESP32-C6" };
+                return { label: `ESP32-C6${experimentalSuffix}`, chipFamily: "ESP32-C6", key: "esp32-c6-devkit" };
             }
             if (name.includes("c3")) {
-                return { label: "ESP32-C3", chipFamily: "ESP32-C3" };
+                return { label: "ESP32-C3", chipFamily: "ESP32-C3", key: "esp32-c3-mini" };
             }
 
-            return { label: "ESP32", chipFamily: "ESP32" };
+            return { label: "ESP32", chipFamily: "ESP32", key: "esp32-wroom-32d" };
         }
 
         function setManifest(installButton, version, firmware) {
@@ -110,6 +137,18 @@
             const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
             currentManifestUrl = URL.createObjectURL(blob);
             installButton.manifest = currentManifestUrl;
+        }
+
+        function updateBoardPreview(firmware) {
+            const boardPreview = document.getElementById("board-preview");
+            const boardPreviewImage = document.getElementById("board-preview-image");
+            const boardPreviewCaption = document.getElementById("board-preview-caption");
+            const preview = BOARD_PREVIEWS[firmware.key] || BOARD_PREVIEWS["esp32-wroom-32d"];
+
+            boardPreviewImage.src = preview.image;
+            boardPreviewImage.alt = preview.alt;
+            boardPreviewCaption.textContent = preview.caption;
+            boardPreview.hidden = false;
         }
 
         async function loadLatestRelease() {
@@ -136,6 +175,7 @@
                         url: asset.browser_download_url,
                         label: target.label,
                         chipFamily: target.chipFamily,
+                        key: target.key,
                         experimental: asset.name.toLowerCase().includes("experimental")
                     };
                 });
@@ -159,11 +199,13 @@
                 experimentalSupportNote.hidden = !firmwareOptions.some(f => f.experimental);
 
                 setManifest(installButton, release.tag_name, firmwareOptions[0]);
+                updateBoardPreview(firmwareOptions[0]);
 
                 firmwareSelect.onchange = () => {
                     const selected = firmwareOptions[Number(firmwareSelect.value)];
                     if (selected) {
                         setManifest(installButton, release.tag_name, selected);
+                        updateBoardPreview(selected);
                     }
                 };
             } catch (err) {
