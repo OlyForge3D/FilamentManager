@@ -38,6 +38,6 @@ html/spoolman_url.json
 _local/*
 website/*
 release.sh
-.github/copilot-instructions.md
+
 data
 wiki
