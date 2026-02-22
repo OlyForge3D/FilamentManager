@@ -504,7 +504,7 @@ void setupWebserver(AsyncWebServer &server) {
     // ── POST /api/v1/pins/update ──
     server.on("/api/v1/pins/update", HTTP_POST, [](AsyncWebServerRequest *request){
         auto parsePinValue = [request](const char *name, int &out) -> bool {
-            AsyncWebParameter *param = nullptr;
+            const AsyncWebParameter *param = nullptr;
             if (request->hasParam(name, true)) {
                 param = request->getParam(name, true);
             } else if (request->hasParam(name)) {
