@@ -204,7 +204,7 @@
                     const target = parseFirmwareTarget(name);
                     return {
                         name,
-                        url: `firmware/latest/${name}`,
+                        url: new URL(`firmware/latest/${name}`, window.location.href).href,
                         label: target.label,
                         chipFamily: target.chipFamily,
                         key: target.key,
