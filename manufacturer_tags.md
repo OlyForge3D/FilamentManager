@@ -1,4 +1,4 @@
-# Manufacturer Tags - English Documentation
+# Manufacturer Tags - Documentation
 
 ## Overview
 
