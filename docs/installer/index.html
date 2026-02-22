@@ -151,14 +151,78 @@
             boardPreview.hidden = false;
         }
 
-        async function loadLatestRelease() {
+        function applyFirmwareOptions(version, firmwareOptions, sourceNote = "") {
             const versionInfo = document.getElementById("version-info");
             const installButton = document.getElementById("install-button");
             const firmwareSelect = document.getElementById("firmware-select");
             const firmwareSelectWrapper = document.getElementById("firmware-select-wrapper");
             const experimentalSupportNote = document.getElementById("experimental-support-note");
 
+            versionInfo.textContent =
+                `Latest version: ${version} (${firmwareOptions.length} firmware build${firmwareOptions.length === 1 ? "" : "s"})${sourceNote}`;
+
+            firmwareSelect.innerHTML = "";
+            firmwareOptions.forEach((firmware, index) => {
+                const option = document.createElement("option");
+                option.value = String(index);
+                option.textContent = `${firmware.label} — ${firmware.name}`;
+                firmwareSelect.appendChild(option);
+            });
+
+            firmwareSelectWrapper.hidden = firmwareOptions.length <= 1;
+            experimentalSupportNote.hidden = !firmwareOptions.some(f => f.experimental);
+
+            setManifest(installButton, version, firmwareOptions[0]);
+            updateBoardPreview(firmwareOptions[0]);
+
+            firmwareSelect.onchange = () => {
+                const selected = firmwareOptions[Number(firmwareSelect.value)];
+                if (selected) {
+                    setManifest(installButton, version, selected);
+                    updateBoardPreview(selected);
+                }
+            };
+        }
+
+        async function loadMirroredFirmware() {
+            const res = await fetch("firmware/latest/index.json", { cache: "no-store" });
+            if (!res.ok) return null;
+
+            const index = await res.json();
+            if (!index || !Array.isArray(index.assets)) return null;
+
+            const firmwareOptions = index.assets
+                .filter(name => name.startsWith("filaman_full_") && name.endsWith(".bin"))
+                .map(name => {
+                    const target = parseFirmwareTarget(name);
+                    return {
+                        name,
+                        url: `firmware/latest/${name}`,
+                        label: target.label,
+                        chipFamily: target.chipFamily,
+                        key: target.key,
+                        experimental: name.toLowerCase().includes("experimental")
+                    };
+                });
+
+            if (firmwareOptions.length === 0) return null;
+            return { version: index.version || "latest", firmwareOptions };
+        }
+
+        async function loadLatestRelease() {
+            const versionInfo = document.getElementById("version-info");
+
             try {
+                try {
+                    const mirrored = await loadMirroredFirmware();
+                    if (mirrored) {
+                        applyFirmwareOptions(mirrored.version, mirrored.firmwareOptions, " · served from installer mirror");
+                        return;
+                    }
+                } catch (mirrorErr) {
+                    console.warn("Installer mirror unavailable, falling back to GitHub releases.", mirrorErr);
+                }
+
                 const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
                 if (!res.ok) throw new Error(`GitHub API returned ${res.status}`);
                 const release = await res.json();
@@ -179,35 +243,7 @@
                         experimental: asset.name.toLowerCase().includes("experimental")
                     };
                 });
-
-                versionInfo.textContent =
-                    `Latest version: ${release.tag_name} (${firmwareOptions.length} firmware build${firmwareOptions.length === 1 ? "" : "s"})`;
-
-                firmwareSelect.innerHTML = "";
-                firmwareOptions.forEach((firmware, index) => {
-                    const option = document.createElement("option");
-                    option.value = String(index);
-                    option.textContent = `${firmware.label} — ${firmware.name}`;
-                    firmwareSelect.appendChild(option);
-                });
-
-                if (firmwareOptions.length > 1) {
-                    firmwareSelectWrapper.hidden = false;
-                } else {
-                    firmwareSelectWrapper.hidden = true;
-                }
-                experimentalSupportNote.hidden = !firmwareOptions.some(f => f.experimental);
-
-                setManifest(installButton, release.tag_name, firmwareOptions[0]);
-                updateBoardPreview(firmwareOptions[0]);
-
-                firmwareSelect.onchange = () => {
-                    const selected = firmwareOptions[Number(firmwareSelect.value)];
-                    if (selected) {
-                        setManifest(installButton, release.tag_name, selected);
-                        updateBoardPreview(selected);
-                    }
-                };
+                applyFirmwareOptions(release.tag_name, firmwareOptions);
             } catch (err) {
                 console.error("Failed to load release:", err);
                 versionInfo.textContent = "Could not fetch latest release. Check the releases page.";

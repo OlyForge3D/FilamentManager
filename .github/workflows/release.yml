@@ -143,6 +143,28 @@ jobs:
             0x3D0000 "${BUILD_DIR}/littlefs.bin"
         done
 
+        INSTALLER_FIRMWARE_DIR="docs/installer/firmware/latest"
+        mkdir -p "${INSTALLER_FIRMWARE_DIR}"
+        rm -f "${INSTALLER_FIRMWARE_DIR}"/filaman_full_*.bin
+        cp "${ARTIFACT_DIR}"/filaman_full_*.bin "${INSTALLER_FIRMWARE_DIR}/"
+
+        python - <<PY
+        import json
+        from datetime import datetime, timezone
+        from pathlib import Path
+
+        firmware_dir = Path("${INSTALLER_FIRMWARE_DIR}")
+        assets = sorted(p.name for p in firmware_dir.glob("filaman_full_*.bin"))
+        payload = {
+            "version": "v${VERSION}",
+            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "assets": assets,
+        }
+        with (firmware_dir / "index.json").open("w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=2)
+            f.write("\n")
+        PY
+
         echo "Release artifact sizes:"
         ls -lh "${ARTIFACT_DIR}"/*.bin
 
@@ -151,7 +173,7 @@ jobs:
         VERSION=${{ steps.get_version.outputs.VERSION }}
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add platformio.ini
+        git add platformio.ini docs/installer/firmware/latest
         git commit -m "chore: bump version to v${VERSION}"
         git tag "v${VERSION}"
         git push origin main "v${VERSION}"
