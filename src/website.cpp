@@ -472,6 +472,25 @@ void setupWebserver(AsyncWebServer &server) {
         request->send(200, "application/json", jsonResponse);
     });
 
+    server.on("/api/capabilities", HTTP_GET, [](AsyncWebServerRequest *request){
+        JsonDocument doc;
+        #ifdef DISABLE_SCALE
+          doc["scale"] = false;
+        #else
+          doc["scale"] = true;
+        #endif
+        #ifdef DISABLE_DISPLAY
+          doc["display"] = false;
+        #else
+          doc["display"] = true;
+        #endif
+        doc["nfc"] = true;
+        doc["board"] = BOARD_NAME;
+        String jsonResponse;
+        serializeJson(doc, jsonResponse);
+        request->send(200, "application/json", jsonResponse);
+    });
+
     server.on("/api/backends", HTTP_GET, [](AsyncWebServerRequest *request){
         JsonDocument doc;
         doc["moonraker"]["enabled"] = moonrakerEnabled;

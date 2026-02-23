@@ -89,7 +89,7 @@ bool savePinConfig(const Pn532Pins &pins);
 #define SCREEN_HEIGHT                       64U
 #define SCREEN_TOP_BAR_HEIGHT               16U
 #define SCREEN_PROGRESS_BAR_HEIGHT          12U
-#define DISPLAY_BOOT_TEXT                   "FilaMan"
+#define DISPLAY_BOOT_TEXT                   "FilaMgr"
 
 #define WIFI_CHECK_INTERVAL                 60000U
 #define DISPLAY_UPDATE_INTERVAL             1000U

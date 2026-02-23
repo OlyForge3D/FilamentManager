@@ -16,7 +16,7 @@ void wifiSettings() {
     // Optimized WiFi settings
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
     WiFi.setSleep(false); // disable sleep mode
-    WiFi.setHostname("FilaMan");
+    WiFi.setHostname("FilamentManager");
     esp_wifi_set_ps(WIFI_PS_NONE);
     
     // Maximum transmit power
@@ -30,7 +30,7 @@ void wifiSettings() {
 }
 
 void startMDNS() {
-  if (!MDNS.begin("filaman")) {
+  if (!MDNS.begin("filamentmanager")) {
     Serial.println("Error setting up MDNS responder!");
     while(1) {
       vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -64,8 +64,8 @@ void initWiFi() {
 
   oledShowProgressBar(1, 7, DISPLAY_BOOT_TEXT, "WiFi init");
   
-  //bool res = wm.autoConnect("FilaMan"); // anonymous ap
-  if(!wm.autoConnect("FilaMan")) {
+  //bool res = wm.autoConnect("FilamentManager"); // anonymous ap
+  if(!wm.autoConnect("FilamentManager")) {
     Serial.println("Failed to connect or hit timeout");
     // ESP.restart();
     oledShowTopRow();

@@ -14,7 +14,7 @@ def copy_file(input_file, output_file):
 
 def should_compress(file):
      # Skip compression for spoolman.html
-    if file == 'spoolman.html' or file == 'waage.html':
+    if file in ('spoolman.html', 'waage.html', 'hardware.html'):
         return False
     # Only compress certain file types
     return file.endswith(('.js', '.png', '.css', '.html'))
