@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FilaMan - Filament Management Tool</title>
+    <title>FilamentManager - NFC Spool Management</title>
     <link rel="icon" type="image/png" href="/favicon.ico">
     <link rel="stylesheet" href="style.css">
     <script>
@@ -21,10 +21,10 @@
 <body>
     <div class="navbar">
         <div style="display: flex; align-items: center; gap: 2rem;">
-            <img src="/logo.png" alt="FilaMan Logo" class="logo">
+            <img src="/logo.png" alt="FilamentManager Logo" class="logo">
             <div class="logo-text">
-                <h1>FilaMan<span class="version"></span></h1>
-                <h4>Filament Management Tool</h4>
+                <h1>FilamentManager<span class="version"></span></h1>
+                <h4>NFC Spool Management</h4>
             </div>
         </div>
         <nav style="display: flex; gap: 1rem;">
@@ -57,7 +57,7 @@
         <div class="update-options">
             <div class="update-section">
                 <h2>1) Firmware Update</h2>
-                <p>Upload a new firmware file (upgrade_filaman_firmware_*.bin)</p>
+                <p>Upload a new firmware file (.bin)</p>
                 <div class="update-form">
                     <form id="firmwareForm" enctype='multipart/form-data' data-type="firmware">
                         <input type='file' name='update' accept='.bin' required>
@@ -68,7 +68,7 @@
 
             <div class="update-section">
                 <h2>2) Webpage Update</h2>
-                <p>Upload a new webpage file (upgrade_filaman_website_*.bin)</p>
+                <p>Upload a new webpage file (.bin)</p>
                 <div class="update-form">
                     <form id="webpageForm" enctype='multipart/form-data' data-type="webpage">
                         <input type='file' name='update' accept='.bin' required>
@@ -195,16 +195,6 @@
             
             if (!file) {
                 alert('Please select a file.');
-                return;
-            }
-            
-            // Validate file name pattern
-            if (updateType === 'firmware' && !file.name.startsWith('upgrade_filaman_firmware_')) {
-                alert('Please select a valid firmware file (upgrade_filaman_firmware_*.bin)');
-                return;
-            }
-            if (updateType === 'webpage' && !file.name.startsWith('upgrade_filaman_website_')) {
-                alert('Please select a valid webpage file (upgrade_filaman_website_*.bin)');
                 return;
             }
             

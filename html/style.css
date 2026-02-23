@@ -1,32 +1,37 @@
-/* Allgemeine Stile */
+/* FilamentManager Dark Theme - GitHub-style */
 :root {
-    --primary-color: #63bb67;     /* Hauptfarbe Grün */
-    --primary-light: #8cd590;     /* Helleres Grün */
-    --background-green: #28902D;  /* Dunkleres Hintergrund-Grün */
-    --text-color: #1e293b;       /* Dunkelgrau für Text */
-    --inner-box-bg: #63bb67;     /* Grüner Hintergrund für innere Boxen */
-    --inner-text-color: #ffffff; /* Weißer Text in Boxen */
-    --stat-value-color: #ffd700; /* Gelber Text für Werte */
-    --header-bg: #28902D; /* Hintergrundfarbe für den Header */
-    --header-border: #f7208c; /* Pinke Randfarbe für den Header */
-    --accent-color: #d51274; /* Pink für Akzentfarben */
-    --header-text: #40e8b7; /* Türkisfarbener Text */
-    --background-light: #63bb67;  /* Helleres Grün für Container */
-    --border-color: rgba(255, 255, 255, 0.1); /* Subtile Borders */
-    --card-background: rgba(255, 255, 255, 0.15);
-    --card-shadow: 0 4px 15px rgba(31, 41, 55, 0.1);
-    --glass-bg: rgba(255, 255, 255, 0.15);
-    --glass-border: 1px solid rgba(255, 255, 255, 0.2);
+    --primary-color: #21262d;     /* Card/box background */
+    --primary-light: #30363d;     /* Lighter surface */
+    --background-dark: #0d1117;   /* Main background */
+    --background-surface: #161b22; /* Secondary background */
+    --text-color: #c9d1d9;        /* Primary text */
+    --text-muted: #8b949e;        /* Muted text */
+    --inner-box-bg: #21262d;      /* Box background */
+    --inner-text-color: #c9d1d9;  /* Box text */
+    --stat-value-color: #58a6ff;  /* Accent blue for values */
+    --header-bg: #161b22;         /* Header background */
+    --header-border: #30363d;     /* Subtle border */
+    --accent-color: #58a6ff;      /* Blue accent */
+    --header-text: #c9d1d9;       /* Header text */
+    --background-light: #21262d;  /* Container background */
+    --border-color: #30363d;      /* Border color */
+    --card-background: #21262d;
+    --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    --glass-bg: rgba(33, 38, 45, 0.9);
+    --glass-border: 1px solid #30363d;
     --glass-blur: blur(12px);
-    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    --success-color: #238636;     /* Green for success */
+    --error-color: #f85149;       /* Red for errors */
+    --warning-color: #d29922;     /* Orange for warnings */
+    --link-color: #58a6ff;        /* Blue links */
 }
 
 body { 
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     margin: 0; 
     padding: 0; 
-    background: var(--background-green);
-    background-image: radial-gradient(circle at center, var(--primary-color) 0%, var(--background-green) 100%);
+    background: var(--background-dark);
     color: var(--text-color);
     display: flex;
     flex-direction: column;
@@ -36,14 +41,14 @@ body {
 /* Header und Navigation */
 .navbar { 
     background: var(--header-bg);
-    border: 2px solid var(--header-border);
+    border: 1px solid var(--header-border);
     width: calc(100% - 4rem);
     max-width: 1400px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 1.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--card-shadow);
     position: fixed;
     top: 1rem;
     left: 50%;
@@ -85,16 +90,16 @@ body {
 
 .logo-text h4 {
     font-size: 1rem;
-    color: var(--header-text);
+    color: var(--text-muted);
     margin: 0 !important;
 }
 
 .logo-text h1 {
     font-size: 1.75rem;
     font-weight: 600;
-    color: var(--header-border);
+    color: var(--accent-color);
     margin: 5px !important;
-    text-shadow: 1px 1px 0 var(--accent-color);
+    text-shadow: none;
 }
 
 /* Status Container in der Navbar */
@@ -126,11 +131,11 @@ body {
 }
 
 .online { 
-    background-color: #63bb67;
+    background-color: var(--success-color);
 }
 
 .offline { 
-    background-color: #dc2626;
+    background-color: var(--error-color);
 }
 
 .status-dot.offline {
@@ -143,10 +148,10 @@ body {
 }
 
 .ram-status { 
-    color: var(--inner-text-color);
+    color: var(--text-muted);
     font-size: 0.9em;
     padding: 0.25rem 0.75rem;
-    background: rgba(99, 187, 103, 0.1);
+    background: rgba(88, 166, 255, 0.1);
     border-radius: 0.5rem;
 }
 
@@ -155,20 +160,20 @@ body {
     padding: 20px; 
     width: 100%;
     max-width: none;
-    background: white; 
+    background: var(--background-surface); 
     border-radius: 8px; 
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--card-shadow);
     margin-top: 20px; /* Platz für die fixe Navbar */
 }
 
 /* Überschriften */
 h1 { 
-    color: #007bff; 
+    color: var(--accent-color); 
     text-align: center; 
 }
 
 h3 {
-    color: #007bff !important;
+    color: var(--accent-color) !important;
     font-size: 24px;
     margin-top: 5px;
     margin-bottom: 5px;
@@ -190,9 +195,11 @@ label {
 
 input[type="text"], input[type="submit"], input[type="number"] { 
     padding: 10px; 
-    border: 1px solid #ccc; 
+    border: 1px solid var(--border-color); 
     border-radius: 5px; 
     font-size: 16px; 
+    background-color: var(--background-surface);
+    color: var(--text-color);
 }
 
 input[type="number"] { 
@@ -200,12 +207,12 @@ input[type="number"] {
 }
 
 input[type="text"]:focus, input[type="number"]:focus { 
-    border-color: #007bff; 
+    border-color: var(--accent-color); 
     outline: none; 
 }
 
 input[type="submit"] { 
-    background-color: #007bff; 
+    background-color: var(--accent-color); 
     color: white; 
     border: none; 
     cursor: pointer; 
@@ -213,7 +220,7 @@ input[type="submit"] {
 }
 
 input[type="submit"]:hover { 
-    background-color: #0056b3; 
+    background-color: #1f6feb; 
 }
 
 /* Buttons */
@@ -221,7 +228,7 @@ button {
     padding: 10px 15px; 
     border: none; 
     border-radius: 5px; 
-    background-color: #007bff; 
+    background-color: var(--accent-color); 
     color: white; 
     font-size: 16px; 
     cursor: pointer; 
@@ -229,7 +236,7 @@ button {
 }
 
 button:hover { 
-    background-color: #0056b3; 
+    background-color: #1f6feb; 
 }
 
 /* Statusnachricht */
@@ -237,9 +244,10 @@ button:hover {
     margin-top: 10px; 
     padding: 10px; 
     border-radius: 5px; 
-    background-color: #8cc4fd; 
+    background-color: var(--primary-light); 
     text-align: center; 
     font-weight: bold;
+    color: var(--text-color);
 }
 
 .features {
@@ -253,26 +261,27 @@ button:hover {
     padding: 0 20px;
     border-radius: 8px;
     margin: 0 10px 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--card-shadow);
     border: var(--glass-border);
+    background: var(--background-surface);
 }
 .feature h3 {
     font-size: 1.4rem;
     margin-bottom: 10px;
-    color: #007bff;
+    color: var(--accent-color);
 }
 .feature p {
     font-size: 1rem;
-    color: #ffffff;
+    color: var(--text-muted);
 }
 
 p {
     font-size: 1rem;
-    color: #ffffff;
+    color: var(--text-color);
 }
 
 a {
-    color: #007bff;
+    color: var(--link-color);
     text-decoration: none;
     font-weight: bold;
     cursor: pointer;
@@ -283,12 +292,13 @@ a:hover {
 
 /* Karten-Stil für optische Trennung */
 .card {
-    background: var(--primary-color);
+    background: var(--background-surface);
     width: 500px;
     padding: 15px;
     margin: 20px auto;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
 }
 
 /* Versteckte Elemente */
@@ -301,34 +311,34 @@ a:hover {
     width: 100%;
     padding: 12px 15px;
     font-size: 16px;
-    border: 2px solid #e0e0e0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    background-color: #fff;
+    background-color: var(--background-surface);
+    color: var(--text-color);
     cursor: pointer;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23007bff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2358a6ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 15px center;
     background-size: 15px;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: none;
 }
 
 .styled-select:hover {
-    border-color: #007bff;
-    box-shadow: 0 3px 6px rgba(0, 123, 255, 0.1);
+    border-color: var(--accent-color);
 }
 
 .styled-select:focus {
-    border-color: #007bff;
+    border-color: var(--accent-color);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.25);
 }
 
 .styled-select:disabled {
-    background-color: #f5f5f5;
+    background-color: var(--primary-light);
     cursor: not-allowed;
     opacity: 0.7;
 }
@@ -341,17 +351,17 @@ a:hover {
 
 .nfc-card-data {
     padding-left: 20px !important;
-    color: white !important;
+    color: var(--text-color) !important;
     font-weight: bold !important;
     margin: 0 auto !important;
 }
 
 .nfc-success {
-    color: green;
+    color: var(--success-color);
 }
 
 .nfc-error {
-    color: red;
+    color: var(--error-color);
 }
 
 /* Füge diese neuen Styles zu deiner style.css hinzu */
@@ -410,8 +420,8 @@ a:hover {
     border-radius: 8px;
     padding: 15px;
     margin: 10px 0;
-    color: var(--inner-text-color);
-    background: var(--background-green);
+    color: var(--text-color);
+    background: var(--background-surface);
     border: 1px solid var(--border-color);
     border-radius: 8px;
 }
@@ -443,18 +453,18 @@ a:hover {
     height: 20px;
     border-radius: 50%;
     display: inline-block;
-    border: 2px solid #ccc;
-    background-color: #ffffff;
+    border: 2px solid var(--border-color);
+    background-color: var(--background-surface);
 }
 
 .status-circle.success {
-    background-color: #28a745;
-    border-color: #218838;
+    background-color: var(--success-color);
+    border-color: #196c2e;
 }
 
 .status-circle.error {
-    background-color: #dc3545;
-    border-color: #c82333;
+    background-color: var(--error-color);
+    border-color: #b62324;
 }
 
 .nfc-data {
@@ -478,20 +488,21 @@ a:hover {
 
 .error-message {
     padding: 10px;
-    background-color: #fff3f3;
+    background-color: rgba(248, 81, 73, 0.1);
     border-radius: 4px;
-    border-left: 4px solid #dc3545;
+    border-left: 4px solid var(--error-color);
+    color: var(--text-color);
 }
 
 .info-message {
     padding: 10px;
-    background-color: var(--header-bg);
+    background-color: var(--primary-color);
     border-radius: 4px;
-    border-left: 4px solid #39d82e;
+    border-left: 4px solid var(--success-color);
 }
 
 .info-message-inner {
-    background-color: var(--header-bg) !important;
+    background-color: var(--primary-color) !important;
 }
 
 .nfc-header {
@@ -524,18 +535,18 @@ a:hover {
     display: flex;
     align-items: center;
     gap: 10px;
-    background-color: #fff3f3;
-    border: 1px solid #dc3545;
+    background-color: rgba(248, 81, 73, 0.1);
+    border: 1px solid var(--error-color);
     border-radius: 4px;
     padding: 10px 15px;
     margin: 15px auto;
-    color: #dc3545;
+    color: var(--error-color);
     position: fixed;
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: var(--card-shadow);
     max-width: 90%;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -549,8 +560,8 @@ a:hover {
     flex-shrink: 0;
     width: 16px;
     height: 16px;
-    border: 2px solid rgba(220, 53, 69, 0.2);
-    border-top-color: #dc3545;
+    border: 2px solid rgba(248, 81, 73, 0.2);
+    border-top-color: var(--error-color);
     border-radius: 50%;
 }
 
@@ -581,21 +592,21 @@ a:hover {
 }
 
 .btn-primary {
-    background-color: #007bff;
+    background-color: var(--accent-color);
     color: white;
 }
 
 .btn-primary:hover {
-    background-color: #0056b3;
+    background-color: #1f6feb;
 }
 
 .btn-danger {
-    background-color: #dc3545;
+    background-color: var(--error-color);
     color: white;
 }
 
 .btn-danger:hover {
-    background-color: #c82333;
+    background-color: #b62324;
 }
 
 /* Filament Select Styling */
@@ -603,37 +614,37 @@ a:hover {
     width: 100%;
     padding: 12px 15px;
     font-size: 16px;
-    border: 2px solid #e0e0e0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    background-color: #fff;
+    background-color: var(--background-surface);
+    color: var(--text-color);
     cursor: pointer;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23007bff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2358a6ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 15px center;
     background-size: 15px;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: none;
 }
 
 #filamentSelect:hover {
-    border-color: #007bff;
-    box-shadow: 0 3px 6px rgba(0, 123, 255, 0.1);
+    border-color: var(--accent-color);
 }
 
 #filamentSelect:focus {
-    border-color: #007bff;
+    border-color: var(--accent-color);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.25);
 }
 
 #filamentSelect option {
     padding: 8px 15px;
     font-size: 16px;
-    background-color: #fff;
-    color: #000; /* Standard Textfarbe für alles außer dem Farbblock */
+    background-color: var(--background-surface);
+    color: var(--text-color);
 }
 
 #filamentSelect option::first-letter {
@@ -686,36 +697,37 @@ a:hover {
     width: 100%;
     font-family: inherit;
     cursor: default; /* Container selbst soll normalen Cursor haben */
-    color: black;
+    color: var(--text-color);
 }
 
 .dropdown-button {
     padding: 12px 15px;
-    border: 2px solid #e0e0e0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    background-color: #fff;
+    background-color: var(--background-surface);
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 8px;
     transition: all 0.3s ease;
+    color: var(--text-color);
 }
 
 .dropdown-button:hover {
-    border-color: #007bff;
+    border-color: var(--accent-color);
 }
 
 .selected-color {
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    border: 1px solid #333;
+    border: 1px solid var(--border-color);
     flex-shrink: 0;
 }
 
 .dropdown-arrow {
     margin-left: auto;
-    color: #007bff;
+    color: var(--accent-color);
     font-size: 12px;
 }
 
@@ -725,14 +737,14 @@ a:hover {
     top: 100%;
     left: 0;
     right: 0;
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
+    background-color: var(--background-surface);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     margin-top: 4px;
     max-height: 300px;
     overflow-y: auto;
     z-index: 1000;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: var(--card-shadow);
 }
 
 .dropdown-content.show {
@@ -745,17 +757,18 @@ a:hover {
     display: flex;
     align-items: center;
     gap: 8px;
+    color: var(--text-color);
 }
 
 .dropdown-option:hover {
-    background-color: #f8f9fa;
+    background-color: var(--primary-light);
 }
 
 .option-color {
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    border: 1px solid #333;
+    border: 1px solid var(--border-color);
     flex-shrink: 0;
 }
 
@@ -809,18 +822,18 @@ a:hover {
     right: 20px;
     padding: 15px 25px;
     border-radius: 4px;
-    color: black;
+    color: white;
     z-index: 1000;
     animation: slideIn 0.3s ease-out;
 }
 
 .notification.success {
-    background-color: #28a745;
-    color: black !important;
+    background-color: var(--success-color);
+    color: white !important;
 }
 
 .notification.error {
-    background-color: #dc3545;
+    background-color: var(--error-color);
     color: white !important;
 }
 
@@ -899,14 +912,14 @@ a:hover {
     align-items: center;
     margin-bottom: 15px;
     padding-bottom: 0;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .refresh-button {
     display: flex;
     align-items: center;
     padding: 8px 16px;
-    background-color: #007bff;
+    background-color: var(--accent-color);
     color: white;
     border: none;
     border-radius: 4px;
@@ -916,11 +929,11 @@ a:hover {
 }
 
 .refresh-button:hover {
-    background-color: #0056b3;
+    background-color: #1f6feb;
 }
 
 .refresh-button:active {
-    background-color: #004494;
+    background-color: #1158c7;
 }
 
 .spools-info {
@@ -972,26 +985,26 @@ input[type="submit"]:disabled,
 
 /* Schreib-Button */
 #writeNfcButton, #writeLocationNfcButton {
-    background-color: #007bff;
+    background-color: var(--accent-color);
     color: white;
     transition: background-color 0.3s, color 0.3s;
     width: 160px;
 }
 
 #writeNfcButton.writing, #writeLocationNfcButton.writing {
-    background-color: #ffc107;
-    color: black;
+    background-color: var(--warning-color);
+    color: white;
     width: 160px;
 }
 
 #writeNfcButton.success, #writeLocationNfcButton.success {
-    background-color: #28a745;
+    background-color: var(--success-color);
     color: white;
     width: 160px;
 }
 
 #writeNfcButton.error, #writeLocationNfcButton.error {
-    background-color: #dc3545;
+    background-color: var(--error-color);
     color: white;
     width: 160px;
 }
@@ -1064,7 +1077,7 @@ input[type="submit"]:disabled,
 
 .version {
     font-size: 0.4em;
-    color: #000;
+    color: var(--text-muted);
     vertical-align: middle;
     margin-left: 0.5rem;
     text-shadow: none !important;
@@ -1074,14 +1087,14 @@ input[type="submit"]:disabled,
     width: 100%;
     margin: 20px 0;
     display: none;
-    background: #f0f0f0;
+    background: var(--primary-light);
     border-radius: 4px;
     overflow: hidden;
 }
 .progress-bar {
     width: 0%;
     height: 24px;
-    background-color: #4CAF50;
+    background-color: var(--success-color);
     text-align: center;
     line-height: 24px;
     color: white;
@@ -1095,18 +1108,18 @@ input[type="submit"]:disabled,
     display: none;
 }
 .error { 
-    background-color: #ffebee; 
-    color: #c62828; 
-    border: 1px solid #ef9a9a;
+    background-color: rgba(248, 81, 73, 0.1); 
+    color: var(--error-color); 
+    border: 1px solid var(--error-color);
 }
 .success { 
-    background-color: #e8f5e9; 
-    color: #2e7d32; 
-    border: 1px solid #a5d6a7;
+    background-color: rgba(35, 134, 54, 0.1); 
+    color: var(--success-color); 
+    border: 1px solid var(--success-color);
 }
 .update-form {
-    background: var(--primary-color);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    background: var(--background-surface);
+    box-shadow: var(--card-shadow);
     border: var(--glass-border);
     padding: 20px;
     border-radius: 8px;
@@ -1118,12 +1131,13 @@ input[type="submit"]:disabled,
     margin-bottom: 15px;
     width: 80%;
     padding: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
-    background-color: #4CAF50;
+    background-color: var(--primary-color);
+    color: var(--text-color);
 }
 .update-form input[type="submit"] {
-    background-color: #4CAF50;
+    background-color: var(--success-color);
     color: white;
     padding: 10px 20px;
     border: none;
@@ -1133,20 +1147,20 @@ input[type="submit"]:disabled,
     transition: background-color 0.3s;
 }
 .update-form input[type="submit"]:hover {
-    background-color: #45a049;
+    background-color: #196c2e;
 }
 .update-form input[type="submit"]:disabled {
-    background-color: #cccccc;
+    background-color: var(--primary-light);
     cursor: not-allowed;
 }
 .warning {
-    background-color: var(--primary-color);
-    border: 1px solid #ffe0b2;
+    background-color: rgba(210, 153, 34, 0.1);
+    border: 1px solid var(--warning-color);
     margin: 20px auto;
     border-radius: 4px;
     max-width: 600px;
     text-align: center;
-    color: #e65100;
+    color: var(--warning-color);
     padding: 15px;
 }
 
@@ -1157,28 +1171,29 @@ input[type="submit"]:disabled,
 }
 .update-section {
     flex: 1;
-    background: var(--background-green);
+    background: var(--background-surface);
     padding: 1.5rem;
     border-radius: 8px;
+    border: 1px solid var(--border-color);
 }
 .update-section h2 {
     margin-top: 0;
-    color: #333;
+    color: var(--accent-color);
 }
 .update-section p {
-    color: #666;
+    color: var(--text-muted);
     margin-bottom: 1rem;
 }
 .progress-container {
     margin: 20px 0;
-    background: #f0f0f0;
+    background: var(--primary-light);
     border-radius: 4px;
     overflow: hidden;
 }
 .progress-bar {
     width: 0;
     height: 20px;
-    background: #4CAF50;
+    background: var(--success-color);
     transition: width 0.3s ease-in-out;
     text-align: center;
     line-height: 20px;
@@ -1191,16 +1206,16 @@ input[type="submit"]:disabled,
     display: none;
 }
 .status.success {
-    background: #e8f5e9;
-    color: #2e7d32;
+    background: rgba(35, 134, 54, 0.1);
+    color: var(--success-color);
 }
 .status.error {
-    background: #ffebee;
-    color: #c62828;
+    background: rgba(248, 81, 73, 0.1);
+    color: var(--error-color);
 }
 .warning {
-    background: #fff3e0;
-    color: #e65100;
+    background: rgba(210, 153, 34, 0.1);
+    color: var(--warning-color);
     padding: 15px;
     border-radius: 4px;
     margin-bottom: 20px;
