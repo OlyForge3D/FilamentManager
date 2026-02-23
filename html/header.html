@@ -16,6 +16,16 @@
                 }
             })
             .catch(error => console.error('Error fetching version:', error));
+
+        fetch('/api/capabilities')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.scale) {
+                    const scaleLink = document.querySelector('nav a[href="/waage"]');
+                    if (scaleLink) scaleLink.style.display = 'none';
+                }
+            })
+            .catch(error => console.error('Error fetching capabilities:', error));
     </script>
 </head>
 <body>
@@ -30,7 +40,7 @@
         <nav style="display: flex; gap: 1rem;">
             <a href="/">Start</a>
             <a href="/waage">Scale</a>
-            <a href="/spoolman">Spoolman/Bambu</a>
+            <a href="/spoolman">Spoolman</a>
             <a href="/hardware">Hardware</a>
             <a href="/about">About</a>
             <a href="/upgrade">Upgrade</a>
