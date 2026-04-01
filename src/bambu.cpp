@@ -1,4 +1,48 @@
 #include "bambu.h"
+#include "config.h"
+
+#ifdef DISABLE_BAMBU
+
+TaskHandle_t BambuMqttTask = NULL;
+
+bool bambuDisabled = true;
+bool bambu_connected = false;
+uint16_t autoSetToBambuSpoolId = 0;
+BambuCredentials bambuCredentials = {"", "", "", false, BAMBU_DEFAULT_AUTOSEND_TIME};
+
+int ams_count = 0;
+String amsJsonData = "";
+AMSData ams_data[MAX_AMS];
+
+bool removeBambuCredentials() {
+    return true;
+}
+
+bool loadBambuCredentials() {
+    return false;
+}
+
+bool saveBambuCredentials(const String&, const String&, const String&, const bool, const String&) {
+    return false;
+}
+
+bool setupMqtt() {
+    return false;
+}
+
+void mqtt_loop(void * parameter) {
+    (void)parameter;
+}
+
+bool setBambuSpool(String) {
+    return false;
+}
+
+void bambu_restart() {
+}
+
+#else
+
 #include <ArduinoJson.h>
 #include <PubSubClient.h>
 #include <WiFiManager.h>
@@ -8,7 +52,6 @@
 #include "nfc.h"
 #include "commonFS.h"
 #include "esp_task_wdt.h"
-#include "config.h"
 #include "display.h"
 #include <Preferences.h>
 
@@ -689,3 +732,5 @@ void bambu_restart() {
     }
     setupMqtt();
 }
+
+#endif // DISABLE_BAMBU

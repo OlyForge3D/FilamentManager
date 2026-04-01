@@ -112,7 +112,7 @@ FilamentManager can be built with or without these optional features:
 
 *Note: ESP32-C6 variants are experimental.*
 
-Lite variants exclude scale and display code, reducing firmware size and simplifying wiring to just the PN532 NFC module.
+Lite variants exclude scale, display, and Bambu integration code, reducing firmware size and simplifying wiring to just the PN532 NFC module.
 
 ### Building a Lite Variant
 

@@ -112,7 +112,9 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 
         else if (doc["type"] == "reconnect") {
             if (doc["payload"] == "bambu") {
+#ifndef DISABLE_BAMBU
                 bambu_restart();
+#endif
             }
 
             if (doc["payload"] == "spoolman") {
@@ -121,8 +123,10 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
         }
 
         else if (doc["type"] == "setBambuSpool") {
+#ifndef DISABLE_BAMBU
             Serial.println(doc["payload"].as<String>());
             setBambuSpool(doc["payload"]);
+#endif
         }
 
         else if (doc["type"] == "setSpoolmanSettings") {
@@ -351,6 +355,10 @@ void setupWebserver(AsyncWebServer &server) {
 
     // Route for checking Bambu instance
     server.on("/api/bambu", HTTP_GET, [](AsyncWebServerRequest *request){
+#ifdef DISABLE_BAMBU
+        request->send(404, "application/json", "{\"success\": false, \"error\": \"Bambu disabled\"}");
+        return;
+#else
         if (request->hasParam("remove")) {
             if (removeBambuCredentials()) {
                 request->send(200, "application/json", "{\"success\": true}");
@@ -384,6 +392,7 @@ void setupWebserver(AsyncWebServer &server) {
         bool success = saveBambuCredentials(bambu_ip, bambu_serialnr, bambu_accesscode, autoSend, autoSendTime);
 
         request->send(200, "application/json", "{\"healthy\": " + String(success ? "true" : "false") + "}");
+#endif
     });
 
     // Route for checking Spoolman instance
@@ -483,6 +492,11 @@ void setupWebserver(AsyncWebServer &server) {
           doc["display"] = false;
         #else
           doc["display"] = true;
+        #endif
+        #ifdef DISABLE_BAMBU
+          doc["bambu"] = false;
+        #else
+          doc["bambu"] = true;
         #endif
         doc["nfc"] = true;
         doc["board"] = BOARD_NAME;
