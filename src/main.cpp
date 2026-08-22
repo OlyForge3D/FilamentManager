@@ -7,7 +7,6 @@
 #include "website.h"
 #include "api.h"
 #include "display.h"
-#include "bambu.h"
 #include "nfc.h"
 #include "scale.h"
 #include "esp_task_wdt.h"
@@ -53,9 +52,6 @@ void setup() {
 
   // PrintFarmer
   loadPrintFarmerUrl();
-
-  // Bambu MQTT
-  setupMqtt();
 
   // Load pin configuration from NVS (or use board defaults)
   loadPinConfig();
@@ -113,10 +109,6 @@ bool intervalElapsed(unsigned long currentTime, unsigned long &lastTime, unsigne
 unsigned long lastWeightReadTime = 0;
 const unsigned long weightReadInterval = 1000; // 1 second
 
-unsigned long lastAutoSetBambuAmsTime = 0;
-const unsigned long autoSetBambuAmsInterval = 1000; // 1 second
-uint8_t autoAmsCounter = 0;
-
 uint8_t weightSend = 0;
 int16_t lastWeight = 0;
 
@@ -167,38 +159,6 @@ void loop() {
     sendPrintFarmerHeartbeat();
   }
 
-  // When Bambu auto set Spool is active
-  if (bambuCredentials.autosend_enable && autoSetToBambuSpoolId > 0 && !nfcWriteInProgress) 
-  {
-    if (!bambuDisabled && !bambu_connected) 
-    {
-      bambu_restart();
-    }
-
-    if (intervalElapsed(currentMillis, lastAutoSetBambuAmsTime, autoSetBambuAmsInterval)) 
-    {
-      if (nfcReaderState == NFC_IDLE)
-      {
-        lastAutoSetBambuAmsTime = currentMillis;
-        oledShowMessage("Auto Set         " + String(bambuCredentials.autosend_time - autoAmsCounter) + "s");
-        autoAmsCounter++;
-
-        if (autoAmsCounter >= bambuCredentials.autosend_time) 
-        {
-          autoSetToBambuSpoolId = 0;
-          autoAmsCounter = 0;
-          if (!nfcWriteInProgress) {
-            oledShowWeight(weight);
-          }
-        }
-      }
-      else
-      {
-        autoAmsCounter = 0;
-      }
-    }
-  }
-
   // If scale is not calibrated, only show a warning
   if (!scaleCalibrated) 
   {
@@ -216,7 +176,7 @@ void loop() {
     {
       // Use filtered weight for smooth display, but still check API weight for significant changes
       int16_t displayWeight = getFilteredDisplayWeight();
-      if (mainTaskWasPaused || (weight != lastWeight && nfcReaderState == NFC_IDLE && (!bambuCredentials.autosend_enable || autoSetToBambuSpoolId == 0)))
+      if (mainTaskWasPaused || (weight != lastWeight && nfcReaderState == NFC_IDLE))
       {
         (displayWeight < 2) ? ((displayWeight < -2) ? oledShowMessage("!! -0") : oledShowWeight(0)) : oledShowWeight(displayWeight);
       }
@@ -262,12 +222,7 @@ void loop() {
       if (updateSpoolWeight(activeSpoolId, weight)) 
       {
         weightSend = 1;
-        
-        // Set Bambu spool ID for auto-send if enabled
-        if (bambuCredentials.autosend_enable) 
-        {
-          autoSetToBambuSpoolId = activeSpoolId.toInt();
-        }
+
         if (octoEnabled) 
         {
           updateOctoSpoolId = activeSpoolId.toInt();
@@ -289,7 +244,7 @@ void loop() {
       }
     }
 
-    // Handle successful tag write: Send weight to Spoolman but NEVER auto-send to Bambu
+    // Handle successful tag write: Send weight to Spoolman
     if (activeSpoolId != "" && weightCounterToApi > 3 && weightSend == 0 && nfcReaderState == NFC_WRITE_SUCCESS && tagProcessed == false && spoolmanApiState == API_IDLE) 
     {
       // set the current tag as processed to prevent it beeing processed again
@@ -298,8 +253,7 @@ void loop() {
       if (updateSpoolWeight(activeSpoolId, weight)) 
       {
         weightSend = 1;
-        Serial.println("Tag written: Weight sent to Spoolman, but NO auto-send to Bambu");
-        // INTENTIONALLY do NOT set autoSetToBambuSpoolId here to prevent Bambu auto-send
+        Serial.println("Tag written: Weight sent to Spoolman");
       }
       else
       {

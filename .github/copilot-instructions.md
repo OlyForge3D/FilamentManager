@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-ESP32 Arduino firmware for NFC-based 3D printer filament management. Reads/writes NFC spool tags (OpenSpool JSON and OpenPrintTag binary TLV formats), integrates with Spoolman, Bambu Lab AMS (MQTT), Moonraker/Klipper, and PrintFarmer. Fork of [FilaMan](https://github.com/ManuelW77/Filaman).
+ESP32 Arduino firmware for NFC-based 3D printer filament management. Reads/writes NFC spool tags (OpenSpool JSON and OpenPrintTag binary TLV formats), integrates with Spoolman, OctoPrint, Moonraker/Klipper, and PrintFarmer. Fork of [FilaMan](https://github.com/ManuelW77/Filaman).
 
 ## Build Commands
 
@@ -29,13 +29,12 @@ There are no unit tests or linters configured.
 
 ### Firmware (src/)
 
-Single-threaded main loop in `main.cpp` with FreeRTOS tasks for NFC reading (`nfc.cpp`), MQTT/Bambu communication (`bambu.cpp`), and scale reading (`scale.cpp`). Task core and priority assignments are in `config.cpp`.
+Single-threaded main loop in `main.cpp` with FreeRTOS tasks for NFC reading (`nfc.cpp`) and scale reading (`scale.cpp`). Task core and priority assignments are in `config.cpp`.
 
 Key modules:
 - **nfc.cpp/h** — PN532 NFC reader via software SPI (bit-banged GPIO, pins configurable at runtime via NVS). State machine (`nfcReaderStateType`: IDLE → READING → READ_SUCCESS/ERROR → WRITING → WRITE_SUCCESS/ERROR). Detects tag format automatically (OpenSpool JSON vs OpenPrintTag binary TLV vs raw spool ID).
 - **openprinttag.cpp/h** — OpenPrintTag binary TLV encoder/decoder (Prusa's NFC standard). Field keys defined as `OPTFieldKey` enum.
 - **api.cpp/h** — Spoolman REST API client, Moonraker/Klipper integration, PrintFarmer webhooks/heartbeat. State machine (`spoolmanApiStateType`: INIT → IDLE → TRANSMITTING).
-- **bambu.cpp/h** — Bambu Lab AMS MQTT client with TLS (cert in `bambu_cert.h`). Auto-send spool data to AMS slots.
 - **website.cpp/h** — ESPAsyncWebServer + WebSocket for real-time UI updates. Serves gzipped files from LittleFS.
 - **config.h/cpp** — Pin definitions, NVS namespace/key constants, display constants, FreeRTOS task config.
 - **commonFS.cpp/h** — LittleFS JSON file helpers (`saveJsonValue`, `loadJsonValue`).
@@ -54,8 +53,8 @@ Static HTML/JS/CSS served from LittleFS. Pages communicate with firmware via Web
 
 ### Persistent Storage
 
-- **NVS (Non-Volatile Storage)** — Credentials and settings. Namespaces: `api` (Spoolman/Moonraker/PrintFarmer URLs and keys), `bambu` (printer credentials), `scale` (calibration).
-- **LittleFS** — Web UI files and JSON config files (`bambu_credentials.json`, `spoolman_url.json`, etc.).
+- **NVS (Non-Volatile Storage)** — Credentials and settings. Namespaces: `api` (Spoolman/Moonraker/PrintFarmer URLs and keys), `scale` (calibration).
+- **LittleFS** — Web UI files and JSON config files (`spoolman_url.json`, etc.).
 
 ## Key Conventions
 
@@ -63,6 +62,6 @@ Static HTML/JS/CSS served from LittleFS. Pages communicate with firmware via Web
 - **Version from build flags** — `VERSION` macro is set in `platformio.ini` via `-DVERSION=\"${common.version}\"`. The `[common]` section is the single source of truth.
 - **HTML header injection** — Never duplicate nav/head content across HTML files. Edit `html/header.html` and the build system propagates it via `<!-- head -->` markers.
 - **Watchdog** — 10-second WDT is active on the main loop task. Long-running operations must reset it (`esp_task_wdt_reset()`).
-- **Global state via externs** — Module state is shared through `extern` globals declared in headers (e.g., `nfcReaderState`, `spoolmanApiState`, `bambu_connected`).
+- **Global state via externs** — Module state is shared through `extern` globals declared in headers (e.g., `nfcReaderState`, `spoolmanApiState`, `spoolmanConnected`).
 - **NFC tag format detection** — `detectTagFormat()` returns `NfcTagFormat` enum. Always handle both OpenSpool and OpenPrintTag formats when working with NFC read/write logic.
 - **Partition layout** — Custom `partitions.csv` with dual OTA partitions (app0/app1 at 1.875MB each) and 192KB SPIFFS/LittleFS. Firmware must stay under ~1.875MB.

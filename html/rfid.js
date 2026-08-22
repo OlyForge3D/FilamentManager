@@ -96,9 +96,7 @@ function initWebSocket() {
             lastHeartbeatResponse = Date.now(); // Update timestamp on every server response
             
             const data = JSON.parse(event.data);
-            if (data.type === 'amsData') {
-                displayAmsData(data.payload);
-            } else if (data.type === 'nfcTag') {
+            if (data.type === 'nfcTag') {
                 updateNfcStatusIndicator(data.payload);
             } else if (data.type === 'nfcData') {
                 // Pass format info for OpenPrintTag detection
@@ -111,28 +109,9 @@ function initWebSocket() {
             } else if (data.type === 'heartbeat') {
                 // Optional: Specific handling of heartbeat responses
                 // Update status dots
-                const bambuDot = document.getElementById('bambuDot');
                 const spoolmanDot = document.getElementById('spoolmanDot');
                 const ramStatus = document.getElementById('ramStatus');
 
-                if (bambuDot) {
-                    bambuDot.className = 'status-dot ' + (data.bambu_connected ? 'online' : 'offline');
-                    // Add click handler only when offline
-                    if (!data.bambu_connected) {
-                        bambuDot.style.cursor = 'pointer';
-                        bambuDot.onclick = function() {
-                            if (socket && socket.readyState === WebSocket.OPEN) {
-                                socket.send(JSON.stringify({
-                                    type: 'reconnect',
-                                    payload: 'bambu'
-                                }));
-                            }
-                        };
-                    } else {
-                        bambuDot.style.cursor = 'default';
-                        bambuDot.onclick = null;
-                    }
-                }
                 if (spoolmanDot) {
                     spoolmanDot.className = 'status-dot ' + (data.spoolman_connected ? 'online' : 'offline');
                     // Add click handler only when offline
@@ -202,9 +181,6 @@ document.addEventListener('spoolmanError', function(event) {
 
 document.addEventListener('filamentSelected', function (event) {
     updateNfcInfo();
-    // Show spool buttons when a filament is selected
-    const selectedText = document.getElementById("selected-filament").textContent;
-    updateSpoolButtons(selectedText !== "Please choose...");
 });
 
 function updateNfcInfo() {
@@ -228,212 +204,6 @@ function updateNfcInfo() {
         writeButton.classList.remove("hidden");
     } else {
         writeButton.classList.add("hidden");
-    }
-}
-
-function displayAmsData(amsData) {
-    const amsDataContainer = document.getElementById('amsData');
-    amsDataContainer.innerHTML = ''; 
-
-    amsData.forEach((ams) => {
-        // Determine the display name for the AMS
-        const amsDisplayName = ams.ams_id === 255 ? 'External Spool' : `AMS ${ams.ams_id}`;
-        
-        const trayHTML = ams.tray.map(tray => {
-            // Check if any data is present
-            const relevantFields = ['tray_type', 'tray_sub_brands', 'tray_info_idx', 'setting_id', 'cali_idx'];
-            const hasAnyContent = relevantFields.some(field => 
-                tray[field] !== null && 
-                tray[field] !== undefined && 
-                tray[field] !== '' &&
-                tray[field] !== 'null'
-            );
-
-            // Determine the display name for the tray
-            const trayDisplayName = (ams.ams_id === 255) ? 'External' : `Tray ${tray.id}`;
-
-            // Only create button HTML for non-empty trays
-            const buttonHtml = `
-                <button class="spool-button" onclick="handleSpoolIn(${ams.ams_id}, ${tray.id})" 
-                        style="position: absolute; top: -30px; left: -15px; 
-                               background: none; border: none; padding: 0; 
-                               cursor: pointer; display: none;">
-                    <img src="spool_in.png" alt="Spool In" style="width: 48px; height: 48px;">
-                </button>`;
-            
-                        // Only create button HTML for non-empty trays
-            const outButtonHtml = `
-                <button class="spool-button" onclick="handleSpoolOut()" 
-                        style="position: absolute; top: -35px; right: -15px; 
-                               background: none; border: none; padding: 0; 
-                               cursor: pointer; display: block;">
-                    <img src="spool_in.png" alt="Spool In" style="width: 48px; height: 48px; transform: rotate(180deg) scaleX(-1);">
-                </button>`;
-
-            if (!hasAnyContent) {
-                return `
-                    <div class="tray">
-                        <p class="tray-head">${trayDisplayName}</p>
-                        <p>
-                            ${(ams.ams_id === 255 && tray.tray_type === '') ? buttonHtml : ''}
-                            Empty
-                        </p>
-                    </div>
-                    <hr>`;
-            }
-
-            // Generate the type together with color box
-            const typeWithColor = tray.tray_type ? 
-                `<p>Typ: ${tray.tray_type} ${tray.tray_color ? `<span style="
-                    background-color: #${tray.tray_color}; 
-                    width: 20px; 
-                    height: 20px; 
-                    display: inline-block; 
-                    vertical-align: middle;
-                    border: 1px solid #333;
-                    border-radius: 3px;
-                    margin-left: 5px;"></span>` : ''}</p>` : '';
-
-            // Array with remaining tray properties
-            const trayProperties = [
-                { key: 'tray_sub_brands', label: 'Sub Brands' },
-                { key: 'tray_info_idx', label: 'Filament IDX' },
-                { key: 'setting_id', label: 'Setting ID' },
-                { key: 'cali_idx', label: 'Calibration IDX' }
-            ];
-
-            // Only display valid fields
-            const trayDetails = trayProperties
-                .filter(prop => 
-                    tray[prop.key] !== null && 
-                    tray[prop.key] !== undefined && 
-                    tray[prop.key] !== '' &&
-                    tray[prop.key] !== 'null'
-                )
-                .map(prop => {
-                    // Special handling for setting_id
-                    if (prop.key === 'cali_idx' && tray[prop.key] === '-1') {
-                        return `<p>${prop.label}: not calibrated</p>`;
-                    }
-                    return `<p>${prop.label}: ${tray[prop.key]}</p>`;
-                })
-                .join('');
-
-            // Only show temperatures when both are not 0
-            const tempHTML = (tray.nozzle_temp_min > 0 && tray.nozzle_temp_max > 0) 
-                ? `<p>Nozzle Temp: ${tray.nozzle_temp_min}°C - ${tray.nozzle_temp_max}°C</p>`
-                : '';
-
-            return `
-                <div class="tray" ${tray.tray_color ? `style="border-left: 4px solid #${tray.tray_color};"` : 'style="border-left: 4px solid #007bff;"'}>
-                    <div style="position: relative;">
-                        ${buttonHtml}
-                        <p class="tray-head">${trayDisplayName}</p>
-                        ${typeWithColor}
-                        ${trayDetails}
-                        ${tempHTML}
-                        ${(ams.ams_id === 255 && tray.tray_type !== '') ? outButtonHtml : ''}
-                    </div>
-                    
-                </div>`;
-        }).join('');
-
-        const amsInfo = `
-            <div class="feature">
-                <h3>${amsDisplayName}:</h3>
-                <div id="trayContainer">
-                    ${trayHTML}
-                </div>
-            </div>`;
-        
-        amsDataContainer.innerHTML += amsInfo;
-    });
-}
-
-// Function to show/hide spool buttons
-function updateSpoolButtons(show) {
-    const spoolButtons = document.querySelectorAll('.spool-button');
-    spoolButtons.forEach(button => {
-        button.style.display = show ? 'block' : 'none';
-    });
-}
-
-function handleSpoolOut() {
-    // Create payload
-    const payload = {
-        type: 'setBambuSpool',
-        payload: {
-            amsId: 255,
-            trayId: 254,
-            color: "FFFFFF",
-            nozzle_temp_min: 0,
-            nozzle_temp_max: 0,
-            type: "",
-            brand: ""
-        }
-    };
-
-    try {
-        socket.send(JSON.stringify(payload));
-        showNotification(`External Spool removed. Pls wait`, true);
-    } catch (error) {
-        console.error("Error sending WebSocket message:", error);
-        showNotification("Error while sending!", false);
-    }
-}
-
-// Function to handle spool-in click
-function handleSpoolIn(amsId, trayId) {
-    // Check WebSocket connection first
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-        showNotification("No active WebSocket connection!", false);
-        console.error("WebSocket not connected");
-        return;
-    }
-
-    // Get the selected filament
-    const selectedText = document.getElementById("selected-filament").textContent;
-    if (selectedText === "Please choose...") {
-        showNotification("Choose Filament first", false);
-        return;
-    }
-
-    // Find the selected spool in the data
-    const selectedSpool = spoolsData.find(spool => 
-        `${spool.id} | ${spool.filament.name} (${spool.filament.material})` === selectedText
-    );
-
-    if (!selectedSpool) {
-        showNotification("Selected Spool not found", false);
-        return;
-    }
-
-    // Nozzle temperature defaults; FilaMan no longer stores a per-filament range in Spoolman
-    const minTemp = "175";
-    const maxTemp = "275";
-
-    // Create payload
-    const payload = {
-        type: 'setBambuSpool',
-        payload: {
-            amsId: amsId,
-            trayId: trayId,
-            color: selectedSpool.filament.color_hex || "FFFFFF",
-            nozzle_temp_min: parseInt(minTemp),
-            nozzle_temp_max: parseInt(maxTemp),
-            type: selectedSpool.filament.material,
-            brand: selectedSpool.filament.vendor.name
-        }
-    };
-
-    console.log("Spool-In Payload:", payload);
-
-    try {
-        socket.send(JSON.stringify(payload));
-        showNotification(`Spool set in AMS ${amsId} Tray ${trayId}. Pls wait`, true);
-    } catch (error) {
-        console.error("Error sending WebSocket message:", error);
-        showNotification("Error while sending", false);
     }
 }
 

@@ -2,14 +2,18 @@
 
 ## [Unreleased]
 ### Breaking Changes
+- **Bambu Lab support has been removed entirely.** `src/bambu.cpp`, `src/bambu.h` and `src/bambu_cert.h` are deleted, along with the MQTT/TLS stack (`knolleary/PubSubClient`, `digitaldragon/SSLClient`) which is no longer a dependency of any build variant. AMS status reporting, spool-in/spool-out, auto-send-to-AMS, the Bambu credentials UI and NVS namespace, the `/api/bambu` endpoint, the `bambu_filaments.json` filament-index table, and the `amsData` / `setBambuSpool` WebSocket messages are all gone. Anyone relying on Bambu features must stay on v2.1.5 or earlier.
+- The `bambu` field has been removed from `GET /api/capabilities`. The endpoint itself remains and still reports `scale`, `display`, `nfc` and `board`.
+- The `DISABLE_BAMBU` build flag is removed; Lite variants now differ from full variants only by scale and display.
 - FilaMan no longer creates or manages any Spoolman extra fields. `checkSpoolmanExtraFields()` and its auto-provisioning of `nfc_id` (spool) and `nozzle_temperature`, `price_meter`, `price_gramm`, `bambu_setting_id`, `bambu_cali_id`, `bambu_idx`, `bambu_k`, `bambu_flow_ratio`, `bambu_max_volspeed` (filament) are removed. Existing field definitions on a Spoolman instance are left untouched.
-- Removed the Bambu-to-Spoolman write-back ("Set Spoolman Settings"), including the `setSpoolmanSettings` WebSocket command and the AMS tray button that triggered it.
-- Removed the extrusion calibration (`extrusion_cali_sel`) MQTT command and the `setting_id` / `cali_idx` / `tray_info_idx` values that the AMS spool-in payload used to read from Spoolman extra fields.
 
 ### Changed
-- The AMS filament index is now always derived from the local `bambu_filaments.json` lookup instead of `filament.extra.bambu_idx`.
 - Spool tag writes no longer PATCH `spool.extra.nfc_id`; the Spoolman spool id is carried on the NFC tag itself.
 - Removed the "without Tag" statistic and the "Only Spools without SM ID" filter, which both depended on `spool.extra.nfc_id`.
+- Removed the "B" (Bambu) status dot from the web UI header and the OLED Bambu connection icon.
+
+### Removed
+- `html/rfid_bambu.html` — the AMS variant of the main page. `/` now always serves `rfid.html`.
 
 ## [2.0.10] - 2025-10-15
 ### Fixed

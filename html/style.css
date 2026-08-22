@@ -1025,56 +1025,6 @@ input[type="submit"]:disabled,
     animation: dots 1s steps(3, end) infinite;
 }
 
-/* Bambu Settings Erweiterung */
-.bambu-settings {
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    max-width: 400px;
-    margin: 20px auto;
-}
-
-.bambu-settings .input-group {
-    margin-bottom: 15px;
-    text-align: left;
-}
-
-.bambu-settings .input-group label {
-    display: block;
-    margin-bottom: 5px;
-}
-
-.bambu-settings .input-group input {
-    width: 95%;
-}
-
-#bambuStatusMessage {
-    margin-top: 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    justify-content: center;
-}
-
-.amsData {
-    border-color: black !important;
-    border-width: 1px !important;
-}
-
-.tray {
-    position: relative;
-}
-
-.tray-head {
-    color: var(--stat-value-color) !important;
-    text-align: center !important;
-    font-weight: bold !important;
-}
-
-.spool-button:hover {
-    opacity: 0.8;
-}
-
 .version {
     font-size: 0.4em;
     color: var(--text-muted);

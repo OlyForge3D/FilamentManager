@@ -3,8 +3,6 @@
 
 #include <Arduino.h>
 
-#define BAMBU_DEFAULT_AUTOSEND_TIME         60
-
 #define NVS_NAMESPACE_API                   "api"
 #define NVS_KEY_SPOOLMAN_URL                "spoolmanUrl"
 #define NVS_KEY_OCTOPRINT_ENABLED           "octoEnabled"
@@ -19,13 +17,6 @@
 #define NVS_KEY_PRINTFARMER_URL             "pfUrl"
 #define NVS_KEY_PRINTFARMER_API_KEY         "pfApiKey"
 #define NVS_KEY_PRINTFARMER_PRINTER_ID      "pfPrinterId"
-
-#define NVS_NAMESPACE_BAMBU                 "bambu"
-#define NVS_KEY_BAMBU_IP                    "bambuIp"
-#define NVS_KEY_BAMBU_ACCESSCODE            "bambuCode"
-#define NVS_KEY_BAMBU_SERIAL                "bambuSerial"
-#define NVS_KEY_BAMBU_AUTOSEND_ENABLE       "autosendEnable"
-#define NVS_KEY_BAMBU_AUTOSEND_TIME         "autosendTime"
 
 #define NVS_NAMESPACE_SCALE                 "scale"
 #define NVS_KEY_CALIBRATION                 "cal_value"
@@ -81,8 +72,6 @@ extern Pn532Pins pn532Pins;
 void loadPinConfig();
 bool savePinConfig(const Pn532Pins &pins);
 
-#define BAMBU_USERNAME                      "bblp"
-
 #define OLED_RESET                          -1      // Reset pin # (or -1 if sharing Arduino reset pin)
 #define SCREEN_ADDRESS                      0x3CU   // See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 #define SCREEN_WIDTH                        128U
@@ -126,9 +115,6 @@ extern uint8_t rfidTaskCore;
 extern uint8_t rfidTaskPrio;
 
 extern uint8_t rfidWriteTaskPrio;
-
-extern uint8_t mqttTaskCore;
-extern uint8_t mqttTaskPrio;
 
 extern uint8_t scaleTaskCore;
 extern uint8_t scaleTaskPrio;

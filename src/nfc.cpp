@@ -7,7 +7,6 @@
 #include "api.h"
 #include "esp_task_wdt.h"
 #include "scale.h"
-#include "bambu.h"
 #include "main.h"
 #include "openprinttag.h"
 
@@ -32,7 +31,6 @@ String activeSpoolId = "";
 String lastSpoolId = "";
 String nfcJsonData = "";
 bool tagProcessed = false;
-volatile bool pauseBambuMqttTask = false;
 volatile bool nfcReadingTaskSuspendRequest = false;
 volatile bool nfcReadingTaskSuspendState = false;
 volatile bool nfcWriteInProgress = false; // Prevent any tag operations during write
@@ -1665,7 +1663,6 @@ void writeJsonToTag(void *parameter) {
   // Just use nfcWriteInProgress to prevent scanning and fast-path operations
   Serial.println("NFC Write Task starting - High-level operations blocked, low-level NFC available");
 
-  //pauseBambuMqttTask = true;
   // Update the website when status changes
   sendNfcData();
   vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -1706,7 +1703,6 @@ void writeJsonToTag(void *parameter) {
         nfcReaderState = NFC_WRITE_SUCCESS;
         // Update the website when status changes
         sendNfcData();
-        pauseBambuMqttTask = false;
         
         if(params->tagType){
           // Check if weight is over 20g and send to Spoolman
@@ -1837,7 +1833,6 @@ void writeJsonToTag(void *parameter) {
 
   // Only reset the write protection flag - reading task was never suspended
   nfcWriteInProgress = false; // Re-enable high-level tag operations
-  pauseBambuMqttTask = false;
 
   free(params->payload);
   delete params;
@@ -2112,7 +2107,6 @@ void scanRfidTask(void * parameter) {
           // Try fast-path detection first for known spools
           if (quickSpoolIdCheck(uidString)) {
               Serial.println("✓ FAST-PATH: Tag processed quickly, skipping full read");
-              pauseBambuMqttTask = false;
               // Set reader back to idle for next scan
               nfcReaderState = NFC_READ_SUCCESS;
               delay(500); // Small delay before next scan
@@ -2198,7 +2192,7 @@ void scanRfidTask(void * parameter) {
         nfcJsonData = "";
         activeSpoolId = "";
         Serial.println("Tag removed");
-        if (!bambuCredentials.autosend_enable) oledShowWeight(weight);
+        oledShowWeight(weight);
       }
       // Reset state after successful read when tag is removed
       else if (!success && nfcReaderState == NFC_READ_SUCCESS)

@@ -30,14 +30,11 @@
         <nav style="display: flex; gap: 1rem;">
             <a href="/">Start</a>
             <a href="/waage">Scale</a>
-            <a href="/spoolman">Spoolman/Bambu</a>
+            <a href="/spoolman">Spoolman</a>
             <a href="/about">About</a>
             <a href="/upgrade">Upgrade</a>
         </nav>
         <div class="status-container">
-            <div class="status-item">
-                <span class="status-dot" id="bambuDot"></span>B
-            </div>
             <div class="status-item">
                 <span class="status-dot" id="spoolmanDot"></span>S
             </div>
@@ -50,13 +47,13 @@
     <div class="content">
         <h1>FilamentManager</h1>
         <p>NFC-based spool management for 3D printing.</p>
-        <p>Read and write NFC tags to track filament spools, integrate with <a href="https://github.com/Donkie/Spoolman" target="_blank">Spoolman</a>, and sync with Bambu Lab AMS.</p>
+        <p>Read and write NFC tags to track filament spools and integrate with <a href="https://github.com/Donkie/Spoolman" target="_blank">Spoolman</a>.</p>
 
         <h2>About FilamentManager</h2>
         <p>
             FilamentManager is an ESP32-based NFC spool management tool. It reads/writes NFC tags in OpenSpool JSON 
             and OpenPrintTag binary TLV formats, integrates with Spoolman for inventory tracking, and supports 
-            Bambu Lab AMS via MQTT for automatic spool recognition.
+            OctoPrint and Moonraker/Klipper for automatic spool recognition.
         </p>
 
         <p>Learn more at <a href="https://github.com/OlyForge3D/FilamentManager" target="_blank">github.com/OlyForge3D/FilamentManager</a>.</p>
@@ -71,8 +68,8 @@
                 <p>Sync spool data with your self-hosted Spoolman instance for centralized inventory tracking.</p>
             </div>
             <div class="feature">
-                <h3>Bambu Lab AMS</h3>
-                <p>Connect to Bambu Lab printers via MQTT to automatically recognize and activate spools in AMS slots.</p>
+                <h3>Printer Integrations</h3>
+                <p>Set the active spool automatically in OctoPrint, Moonraker/Klipper and PrintFarmer when a tag is scanned.</p>
             </div>
         </div>
     </div>

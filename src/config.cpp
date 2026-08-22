@@ -43,8 +43,6 @@ const uint8_t webserverPort = 80;
 const char* apiUrl = "/api/v1";
 // ***** API
 
-// ***** Bambu Auto Set Spool
-
 // ***** Task Prios
 // Single-core chips (ESP32-C3, C6) must pin everything to core 0
 #if CONFIG_FREERTOS_UNICORE
@@ -55,13 +53,6 @@ uint8_t rfidTaskCore = 1;
 uint8_t rfidTaskPrio = 1;
 
 uint8_t rfidWriteTaskPrio = 1;
-
-#if CONFIG_FREERTOS_UNICORE
-uint8_t mqttTaskCore = 0;
-#else
-uint8_t mqttTaskCore = 1;
-#endif
-uint8_t mqttTaskPrio = 1;
 
 uint8_t scaleTaskCore = 0;
 uint8_t scaleTaskPrio = 1;

@@ -2,12 +2,10 @@
 #include <website.h>
 #include <commonFS.h>
 #include "scale.h"
-#include "bambu.h"
 #include "nfc.h"
 
 
 // Add global variables for config backups
-String bambuCredentialsBackup;
 String spoolmanUrlBackup;
 
 // Global variable for update type
@@ -48,16 +46,6 @@ bool isVersionLessThan(const String& version1, const String& version2) {
 }
 
 void backupJsonConfigs() {
-    // Bambu Credentials backup
-    if (LittleFS.exists("/bambu_credentials.json")) {
-        File file = LittleFS.open("/bambu_credentials.json", "r");
-        if (file) {
-            bambuCredentialsBackup = file.readString();
-            file.close();
-            Serial.println("Bambu credentials backed up");
-        }
-    }
-
     // Spoolman URL backup
     if (LittleFS.exists("/spoolman_url.json")) {
         File file = LittleFS.open("/spoolman_url.json", "r");
@@ -70,17 +58,6 @@ void backupJsonConfigs() {
 }
 
 void restoreJsonConfigs() {
-    // Restore Bambu credentials
-    if (bambuCredentialsBackup.length() > 0) {
-        File file = LittleFS.open("/bambu_credentials.json", "w");
-        if (file) {
-            file.print(bambuCredentialsBackup);
-            file.close();
-            Serial.println("Bambu credentials restored");
-        }
-        bambuCredentialsBackup = ""; // Clear backup
-    }
-
     // Restore Spoolman URL
     if (spoolmanUrlBackup.length() > 0) {
         File file = LittleFS.open("/spoolman_url.json", "w");
@@ -157,12 +134,6 @@ void handleUpdate(AsyncWebServer &server) {
                              size_t index, uint8_t *data, size_t len, bool final) {
 
         // Disable all Tasks
-        if (BambuMqttTask != NULL) 
-        {
-            Serial.println("Delete BambuMqttTask");
-            vTaskDelete(BambuMqttTask);
-            BambuMqttTask = NULL;
-        }
         if (ScaleTask) {
             Serial.println("Delete ScaleTask");
             vTaskDelete(ScaleTask);

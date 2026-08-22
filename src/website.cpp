@@ -3,7 +3,6 @@
 #include "api.h"
 #include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
-#include "bambu.h"
 #include "nfc.h"
 #include "openprinttag.h"
 #include "scale.h"
@@ -33,8 +32,6 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
     HEAP_DEBUG_MESSAGE("onWsEvent begin");
     if (type == WS_EVT_CONNECT) {
         Serial.println("New client connected!");
-        // Send AMS data to the new client
-        if (!bambuDisabled) sendAmsData(client);
         sendNfcData();
         foundNfcTag(client, 0);
         sendWriteResult(client, 3);
@@ -64,7 +61,6 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
             ws.text(client->id(), "{"
                 "\"type\":\"heartbeat\","
                 "\"freeHeap\":" + String(ESP.getFreeHeap()/1024) + ","
-                "\"bambu_connected\":" + String(bambu_connected) + ","
                 "\"spoolman_connected\":" + String(spoolmanConnected) + ""
                 "}");
         }
@@ -111,22 +107,9 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
         }
 
         else if (doc["type"] == "reconnect") {
-            if (doc["payload"] == "bambu") {
-#ifndef DISABLE_BAMBU
-                bambu_restart();
-#endif
-            }
-
             if (doc["payload"] == "spoolman") {
                 initSpoolman();
             }
-        }
-
-        else if (doc["type"] == "setBambuSpool") {
-#ifndef DISABLE_BAMBU
-            Serial.println(doc["payload"].as<String>());
-            setBambuSpool(doc["payload"]);
-#endif
         }
 
         else if (doc["type"] == "saveMoonrakerSettings") {
@@ -214,12 +197,6 @@ void sendNfcData() {
     lastnfcReaderState = nfcReaderState;
 }
 
-void sendAmsData(AsyncWebSocketClient *client) {
-    if (ams_count > 0) {
-        ws.textAll("{\"type\":\"amsData\",\"payload\":" + amsJsonData + "}");
-    }
-}
-
 void setupWebserver(AsyncWebServer &server) {
     oledShowProgressBar(2, 7, DISPLAY_BOOT_TEXT, "Webserver init");
     // Disable all debug output
@@ -237,9 +214,6 @@ void setupWebserver(AsyncWebServer &server) {
     spoolmanUrl = loadSpoolmanUrl();
     Serial.print("Loaded Spoolman URL: ");
     Serial.println(spoolmanUrl);
-
-    // Load Bamb credentials:
-    loadBambuCredentials();
 
     // Route for about
     server.on("/about", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -266,9 +240,8 @@ void setupWebserver(AsyncWebServer &server) {
     // Route for RFID
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
         Serial.println("Request for /rfid received");
-        
-        String page = (bambuDisabled) ? "/rfid.html.gz" : "/rfid_bambu.html.gz";
-        AsyncWebServerResponse *response = request->beginResponse(LittleFS, page, "text/html");
+
+        AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/rfid.html.gz", "text/html");
         
         response->addHeader("Content-Encoding", "gzip");
         response->addHeader("Cache-Control", CACHE_CONTROL);
@@ -299,12 +272,6 @@ void setupWebserver(AsyncWebServer &server) {
         html.replace("{{spoolmanOctoEnabled}}", octoEnabled ? "checked" : "");
         html.replace("{{spoolmanOctoUrl}}", (octoUrl != "") ? octoUrl : "");
         html.replace("{{spoolmanOctoToken}}", (octoToken != "") ? octoToken : "");
-
-        html.replace("{{bambuIp}}", bambuCredentials.ip);            
-        html.replace("{{bambuSerial}}", bambuCredentials.serial);
-        html.replace("{{bambuCode}}", bambuCredentials.accesscode ? bambuCredentials.accesscode : "");
-        html.replace("{{autoSendToBambu}}", bambuCredentials.autosend_enable ? "checked" : "");
-        html.replace("{{autoSendTime}}", (bambuCredentials.autosend_time != 0) ? String(bambuCredentials.autosend_time) : String(BAMBU_DEFAULT_AUTOSEND_TIME));
 
         request->send(200, "text/html", html);
     });
@@ -344,48 +311,6 @@ void setupWebserver(AsyncWebServer &server) {
         request->send(200, "application/json", jsonResponse);
     });
 
-    // Route for checking Bambu instance
-    server.on("/api/bambu", HTTP_GET, [](AsyncWebServerRequest *request){
-#ifdef DISABLE_BAMBU
-        request->send(404, "application/json", "{\"success\": false, \"error\": \"Bambu disabled\"}");
-        return;
-#else
-        if (request->hasParam("remove")) {
-            if (removeBambuCredentials()) {
-                request->send(200, "application/json", "{\"success\": true}");
-            } else {
-                request->send(500, "application/json", "{\"success\": false, \"error\": \"Error deleting Bambu credentials\"}");
-            }
-            return;
-        }
-
-        if (!request->hasParam("bambu_ip") || !request->hasParam("bambu_serialnr") || !request->hasParam("bambu_accesscode")) {
-            request->send(400, "application/json", "{\"success\": false, \"error\": \"Missing parameter\"}");
-            return;
-        }
-
-        String bambu_ip = request->getParam("bambu_ip")->value();
-        String bambu_serialnr = request->getParam("bambu_serialnr")->value();
-        String bambu_accesscode = request->getParam("bambu_accesscode")->value();
-        bool autoSend = (request->getParam("autoSend")->value() == "true") ? true : false;
-        String autoSendTime = request->getParam("autoSendTime")->value();
-        
-        bambu_ip.trim();
-        bambu_serialnr.trim();
-        bambu_accesscode.trim();
-        autoSendTime.trim();
-
-        if (bambu_ip.length() == 0 || bambu_serialnr.length() == 0 || bambu_accesscode.length() == 0) {
-            request->send(400, "application/json", "{\"success\": false, \"error\": \"Empty parameter\"}");
-            return;
-        }
-
-        bool success = saveBambuCredentials(bambu_ip, bambu_serialnr, bambu_accesscode, autoSend, autoSendTime);
-
-        request->send(200, "application/json", "{\"healthy\": " + String(success ? "true" : "false") + "}");
-#endif
-    });
-
     // Route for checking Spoolman instance
     server.on("/reboot", HTTP_GET, [](AsyncWebServerRequest *request){
         ESP.restart();
@@ -416,15 +341,6 @@ void setupWebserver(AsyncWebServer &server) {
         response->addHeader("Cache-Control", CACHE_CONTROL);
         request->send(response);
         Serial.println("favicon.ico sent");
-    });
-
-    // Route for spool_in.png
-    server.on("/spool_in.png", HTTP_GET, [](AsyncWebServerRequest *request){
-        AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/spool_in.png.gz", "image/png");
-        response->addHeader("Content-Encoding", "gzip");
-        response->addHeader("Cache-Control", CACHE_CONTROL);
-        request->send(response);
-        Serial.println("spool_in.png sent");
     });
 
     // Route for JavaScript files
@@ -474,11 +390,6 @@ void setupWebserver(AsyncWebServer &server) {
           doc["display"] = false;
         #else
           doc["display"] = true;
-        #endif
-        #ifdef DISABLE_BAMBU
-          doc["bambu"] = false;
-        #else
-          doc["bambu"] = true;
         #endif
         doc["nfc"] = true;
         doc["board"] = BOARD_NAME;
