@@ -1068,7 +1068,7 @@ uint8_t ntag2xx_WriteNDEF(const char *payload) {
   return 1;
 }
 
-bool decodeNdefAndReturnJson(const byte* encodedMessage, String uidString) {
+bool decodeNdefAndReturnJson(const byte* encodedMessage) {
   oledShowProgressBar(1, octoEnabled?5:4, "Reading", "Decoding data");
 
   // Debug: Print first 32 bytes of the raw data
@@ -1228,7 +1228,7 @@ bool decodeNdefAndReturnJson(const byte* encodedMessage, String uidString) {
       if (spoolmanConnected) {
         oledShowProgressBar(2, octoEnabled ? 5 : 4, "OpenPrintTag", optData.materialName.c_str());
         // Create a new spool in Spoolman from the rich OpenPrintTag metadata
-        if (!createSpoolFromOpenPrintTag(optData, uidString)) {
+        if (!createSpoolFromOpenPrintTag(optData)) {
           Serial.println("Note: Could not auto-create Spoolman spool from OpenPrintTag");
           // Not a fatal error — tag data is still displayed in web UI
         }
@@ -1350,7 +1350,7 @@ bool decodeNdefAndReturnJson(const byte* encodedMessage, String uidString) {
         // If no sm_id is present but the brand is Brand Filament then
         // create a new spool, maybe brand too, in Spoolman
         Serial.println("New Brand Filament Tag found!");
-        createBrandFilament(doc, uidString);
+        createBrandFilament(doc);
       }
       else 
       {
@@ -1408,7 +1408,7 @@ bool readCompleteJsonForFastPath() {
     }
     
     // Decode NDEF and extract JSON
-    bool success = decodeNdefAndReturnJson(data, ""); // Empty UID string for fast-path
+    bool success = decodeNdefAndReturnJson(data);
     
     free(data);
     
@@ -1675,7 +1675,6 @@ void writeJsonToTag(void *parameter) {
   
   // Wait 10sec for tag
   uint8_t success = 0;
-  String uidString = "";
   for (uint16_t i = 0; i < 20; i++) {
     uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
     uint8_t uidLength;
@@ -1684,13 +1683,6 @@ void writeJsonToTag(void *parameter) {
     esp_task_wdt_reset();
     success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 400);
     if (success) {
-      for (uint8_t i = 0; i < uidLength; i++) {
-        //TBD: Rework to remove all the string operations
-        uidString += String(uid[i], HEX);
-        if (i < uidLength - 1) {
-            uidString += ":"; // Optional: add separator
-        }
-      }
       foundNfcTag(nullptr, success);
       break;
     }
@@ -1717,34 +1709,32 @@ void writeJsonToTag(void *parameter) {
         pauseBambuMqttTask = false;
         
         if(params->tagType){
-          // TBD: should this be simplified?
-          if (updateSpoolTagId(uidString, params->payload) && params->tagType) {
-            // Check if weight is over 20g and send to Spoolman
-            if (weight > 20) {
-              Serial.println("Tag successfully written and weight > 20g - sending weight to Spoolman");
-              
-              // Extract spool ID from payload for weight update
-              JsonDocument payloadDoc;
-              DeserializationError error = deserializeJson(payloadDoc, params->payload);
-              
-              if (!error && payloadDoc["sm_id"].is<String>()) {
-                String spoolId = payloadDoc["sm_id"].as<String>();
-                if (spoolId != "") {
-                  Serial.printf("Updating spool %s with weight %dg\n", spoolId.c_str(), weight);
-                  updateSpoolWeight(spoolId, weight);
-                } else {
-                  Serial.println("No valid spool ID found for weight update");
-                }
+          // Check if weight is over 20g and send to Spoolman
+          if (weight > 20) {
+            Serial.println("Tag successfully written and weight > 20g - sending weight to Spoolman");
+
+            // Extract spool ID from payload for weight update
+            JsonDocument payloadDoc;
+            DeserializationError error = deserializeJson(payloadDoc, params->payload);
+
+            if (!error && payloadDoc["sm_id"].is<String>()) {
+              String spoolId = payloadDoc["sm_id"].as<String>();
+              if (spoolId != "") {
+                Serial.printf("Updating spool %s with weight %dg\n", spoolId.c_str(), weight);
+                updateSpoolWeight(spoolId, weight);
               } else {
-                Serial.println("Error parsing payload for spool ID extraction");
+                Serial.println("No valid spool ID found for weight update");
+                oledShowProgressBar(1, 1, "Write Tag", "Done!");
               }
-              
-              payloadDoc.clear();
             } else {
-              Serial.printf("Weight %dg is not above 20g threshold - skipping weight update\n", weight);
+              Serial.println("Error parsing payload for spool ID extraction");
+              oledShowProgressBar(1, 1, "Write Tag", "Done!");
             }
-          }else{
-            // Potentially handle errors
+
+            payloadDoc.clear();
+          } else {
+            Serial.printf("Weight %dg is not above 20g threshold - skipping weight update\n", weight);
+            oledShowProgressBar(1, 1, "Write Tag", "Done!");
           }
         }else{
           oledShowProgressBar(1, 1, "Write Tag", "Done!");
@@ -2169,7 +2159,7 @@ void scanRfidTask(void * parameter) {
             
             Serial.println("Tag reading completed, starting NDEF decode...");
             
-            if (!decodeNdefAndReturnJson(data, uidString)) 
+            if (!decodeNdefAndReturnJson(data)) 
             {
               oledShowProgressBar(1, 1, "Failure", "Unknown tag");
               nfcReaderState = NFC_READ_ERROR;

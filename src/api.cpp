@@ -25,7 +25,6 @@ uint16_t createdFilamentId = 0;  // Store ID of newly created filament
 uint16_t createdSpoolId = 0;  // Store ID of newly created spool
 uint16_t updateOctoSpoolId = 0; // Store spool ID for OctoPrint update
 bool spoolmanConnected = false;
-bool spoolmanExtraFieldsChecked = false;
 TaskHandle_t* apiTask;
 
 // Moonraker/Klipper integration
@@ -45,10 +44,6 @@ struct SendToApiParams {
     String spoolsUrl;
     String updatePayload;
     String octoToken;
-    // Weight update parameters for sequential execution
-    bool triggerWeightUpdate;
-    String spoolIdForWeight;
-    uint16_t weightValue;
 };
 
 JsonDocument fetchSingleSpoolInfo(int spoolId) {
@@ -73,42 +68,14 @@ JsonDocument fetchSingleSpoolInfo(int spoolId) {
             String filamentType = doc["filament"]["material"].as<String>();
             String filamentBrand = doc["filament"]["vendor"]["name"].as<String>();
 
-            int nozzle_temp_min = 0;
-            int nozzle_temp_max = 0;
-            if (doc["filament"]["extra"]["nozzle_temperature"].is<String>()) {
-                String tempString = doc["filament"]["extra"]["nozzle_temperature"].as<String>();
-                tempString.replace("[", "");
-                tempString.replace("]", "");
-                int commaIndex = tempString.indexOf(',');
-                
-                if (commaIndex != -1) {
-                    nozzle_temp_min = tempString.substring(0, commaIndex).toInt();
-                    nozzle_temp_max = tempString.substring(commaIndex + 1).toInt();
-                }
-            } 
-
             String filamentColor = doc["filament"]["color_hex"].as<String>();
             filamentColor.toUpperCase();
-
-            String tray_info_idx = doc["filament"]["extra"]["bambu_idx"].as<String>();
-            tray_info_idx.replace("\"", "");
-            
-            String cali_idx = doc["filament"]["extra"]["bambu_cali_id"].as<String>(); // "\"153\""
-            cali_idx.replace("\"", "");
-            
-            String bambu_setting_id = doc["filament"]["extra"]["bambu_setting_id"].as<String>(); // "\"PFUSf40e9953b40d3d\""
-            bambu_setting_id.replace("\"", "");
 
             doc.clear();
 
             filteredDoc["color"] = filamentColor;
             filteredDoc["type"] = filamentType;
-            filteredDoc["nozzle_temp_min"] = nozzle_temp_min;
-            filteredDoc["nozzle_temp_max"] = nozzle_temp_max;
             filteredDoc["brand"] = filamentBrand;
-            filteredDoc["tray_info_idx"] = tray_info_idx;
-            filteredDoc["cali_idx"] = cali_idx;
-            filteredDoc["bambu_setting_id"] = bambu_setting_id;
         }
     } else {
         Serial.print("Error fetching spool data. HTTP code: ");
@@ -136,9 +103,6 @@ void sendToApi(void *parameter) {
     String spoolsUrl = params->spoolsUrl;
     String updatePayload = params->updatePayload;
     String octoToken = params->octoToken;
-    bool triggerWeightUpdate = params->triggerWeightUpdate;
-    String spoolIdForWeight = params->spoolIdForWeight;
-    uint16_t weightValue = params->weightValue;
 
     // Retry mechanism with configurable parameters
     const uint8_t MAX_RETRIES = 3;
@@ -223,9 +187,6 @@ void sendToApi(void *parameter) {
                 break;
             case API_REQUEST_SPOOL_LOCATION_UPDATE:
                 oledShowProgressBar(1, 1, "Loc. Tag", "Done!");
-                break;
-            case API_REQUEST_SPOOL_TAG_ID_UPDATE:
-                oledShowProgressBar(1, 1, "Write Tag", "Done!");
                 break;
             case API_REQUEST_OCTO_SPOOL_UPDATE:
                 // TBD: Do not use Strings...
@@ -315,73 +276,14 @@ void sendToApi(void *parameter) {
             }
         }
         doc.clear();
-
-        // Execute weight update if requested and tag update was successful
-        if (triggerWeightUpdate && requestType == API_REQUEST_SPOOL_TAG_ID_UPDATE && weightValue > 10) {
-            Serial.println("Executing weight update after successful tag update");
-            
-            // Prepare weight update request
-            String weightUrl = spoolmanUrl + apiUrl + "/spool/" + spoolIdForWeight + "/measure";
-            JsonDocument weightDoc;
-            weightDoc["weight"] = weightValue;
-            
-            String weightPayload;
-            serializeJson(weightDoc, weightPayload);
-            
-            Serial.print("Weight update URL: ");
-            Serial.println(weightUrl);
-            Serial.print("Weight update payload: ");
-            Serial.println(weightPayload);
-
-            // Execute weight update
-            HTTPClient weightHttp;
-            weightHttp.setReuse(false);
-            weightHttp.setTimeout(HTTP_TIMEOUT_MS);
-            weightHttp.begin(weightUrl);
-            weightHttp.addHeader("Content-Type", "application/json");
-            
-            int weightHttpCode = weightHttp.PUT(weightPayload);
-            
-            if (weightHttpCode == HTTP_CODE_OK) {
-                Serial.println("Weight update successful");
-                String weightResponse = weightHttp.getString();
-                JsonDocument weightResponseDoc;
-                DeserializationError weightError = deserializeJson(weightResponseDoc, weightResponse);
-                
-                if (!weightError) {
-                    remainingWeight = weightResponseDoc["remaining_weight"].as<uint16_t>();
-                    Serial.print("Updated weight: ");
-                    Serial.println(remainingWeight);
-                    
-                    if (!octoEnabled) {
-                        oledShowProgressBar(1, 1, "Spool Tag", ("Done: " + String(remainingWeight) + " g remain").c_str());
-                        remainingWeight = 0;
-                    } else {
-                        sendOctoUpdate = true;
-                    }
-                }
-                weightResponseDoc.clear();
-            } else {
-                Serial.print("Weight update failed with HTTP code: ");
-                Serial.println(weightHttpCode);
-                oledShowProgressBar(1, 1, "Failure!", "Weight update");
-            }
-            
-            weightHttp.end();
-            weightDoc.clear();
-        }
     } else {
         switch(requestType){
         case API_REQUEST_SPOOL_WEIGHT_UPDATE:
         case API_REQUEST_SPOOL_LOCATION_UPDATE:
-        case API_REQUEST_SPOOL_TAG_ID_UPDATE:
             oledShowProgressBar(1, 1, "Failure!", "Spoolman update");
             break;
         case API_REQUEST_OCTO_SPOOL_UPDATE:
             oledShowProgressBar(1, 1, "Failure!", "Octoprint update");
-            break;
-        case API_REQUEST_BAMBU_UPDATE:
-            oledShowProgressBar(1, 1, "Failure!", "Bambu update");
             break;
         case API_REQUEST_VENDOR_CHECK:
             oledShowProgressBar(1, 1, "Failure!", "Vendor check");
@@ -416,73 +318,6 @@ void sendToApi(void *parameter) {
     HEAP_DEBUG_MESSAGE("sendToApi end");
     spoolmanApiState = API_IDLE;
     vTaskDelete(NULL);
-}
-
-bool updateSpoolTagId(String uidString, const char* payload) {
-    oledShowProgressBar(2, 3, "Write Tag", "Update Spoolman");
-
-    JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, payload);
-    
-    if (error) {
-        Serial.print("Error parsing JSON: ");
-        Serial.println(error.c_str());
-        return false;
-    }
-    
-    // Check if required fields are present
-    if (!doc["sm_id"].is<String>() || doc["sm_id"].as<String>() == "") {
-        Serial.println("No Spoolman ID found.");
-        return false;
-    }
-
-    String spoolId = doc["sm_id"].as<String>();
-    String spoolsUrl = spoolmanUrl + apiUrl + "/spool/" + spoolId;
-    Serial.print("Update spool with URL: ");
-    Serial.println(spoolsUrl);
-    
-    doc.clear();
-
-    // Create update payload
-    JsonDocument updateDoc;
-    updateDoc["extra"]["nfc_id"] = "\""+uidString+"\"";
-    
-    String updatePayload;
-    serializeJson(updateDoc, updatePayload);
-    Serial.print("Update Payload: ");
-    Serial.println(updatePayload);
-
-    SendToApiParams* params = new SendToApiParams();  
-    if (params == nullptr) {
-        Serial.println("Error: Cannot allocate memory for task parameters.");
-        return false;
-    }
-    params->requestType = API_REQUEST_SPOOL_TAG_ID_UPDATE;
-    params->httpType = "PATCH";
-    params->spoolsUrl = spoolsUrl;
-    params->updatePayload = updatePayload;
-    
-    // Add weight update parameters for sequential execution
-    params->triggerWeightUpdate = (weight > 10);
-    params->spoolIdForWeight = spoolId;
-    params->weightValue = weight;
-
-    // Create task with increased stack size for additional HTTP request
-    BaseType_t result = xTaskCreate(
-        sendToApi,                // Task-Funktion
-        "SendToApiTask",          // Task-Name
-        8192,                     // Increased stack size for additional HTTP request
-        (void*)params,            // Parameter
-        0,                        // Priority
-        apiTask                   // Task handle (not needed)
-    );
-
-    updateDoc.clear();
-
-    // Update Spool weight now handled sequentially in sendToApi task
-    // to prevent parallel API access issues
-
-    return true;
 }
 
 uint8_t updateSpoolWeight(String spoolId, uint16_t weight) {
@@ -615,57 +450,6 @@ bool updateSpoolOcto(int spoolId) {
     );
 
     updateDoc.clear();
-
-    return true;
-}
-
-bool updateSpoolBambuData(String payload) {
-    JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, payload);
-    if (error) {
-        Serial.print("Error parsing JSON: ");
-        Serial.println(error.c_str());
-        return false;
-    }
-
-    String spoolsUrl = spoolmanUrl + apiUrl + "/filament/" + doc["filament_id"].as<String>();
-    Serial.print("Update spool with URL: ");
-    Serial.println(spoolsUrl);
-
-    JsonDocument updateDoc;
-    updateDoc["extra"]["bambu_setting_id"] = "\"" + doc["setting_id"].as<String>() + "\"";
-    updateDoc["extra"]["bambu_cali_id"] = "\"" + doc["cali_idx"].as<String>() + "\"";
-    updateDoc["extra"]["bambu_idx"] = "\"" + doc["tray_info_idx"].as<String>() + "\"";
-    updateDoc["extra"]["nozzle_temperature"] = "[" + doc["temp_min"].as<String>() + "," + doc["temp_max"].as<String>() + "]";
-
-    String updatePayload;
-    serializeJson(updateDoc, updatePayload);
-
-    doc.clear();
-    updateDoc.clear();
-
-    Serial.print("Update Payload: ");
-    Serial.println(updatePayload);
-
-    SendToApiParams* params = new SendToApiParams();
-    if (params == nullptr) {
-        Serial.println("Error: Cannot allocate memory for task parameters.");
-        return false;
-    }
-    params->requestType = API_REQUEST_BAMBU_UPDATE;
-    params->httpType = "PATCH";
-    params->spoolsUrl = spoolsUrl;
-    params->updatePayload = updatePayload;
-
-    // Create task
-    BaseType_t result = xTaskCreate(
-        sendToApi,                // Task-Funktion
-        "SendToApiTask",          // Task-Name
-        6144,                     // Stack size in bytes
-        (void*)params,            // Parameter
-        0,                        // Priority
-        apiTask                      // Task handle (not needed)
-    );
 
     return true;
 }
@@ -960,7 +744,7 @@ uint16_t checkFilament(uint16_t vendorId, const JsonDocument& payload) {
     }
 }
 
-uint16_t createSpool(uint16_t vendorId, uint16_t filamentId, JsonDocument& payload, String uidString) {
+uint16_t createSpool(uint16_t vendorId, uint16_t filamentId, JsonDocument& payload) {
     oledShowProgressBar(5, 5, "New Brand", "Create new Spool");
 
     // Create new spool in Spoolman database using task system
@@ -980,7 +764,6 @@ uint16_t createSpool(uint16_t vendorId, uint16_t filamentId, JsonDocument& paylo
     spoolDoc["remaining_weight"] = spoolDoc["initial_weight"];
     spoolDoc["lot_nr"] = (payload["an"].is<String>() && payload["an"].as<String>().length() > 0) ? payload["an"].as<String>() : "";
     spoolDoc["comment"] = "automatically generated";
-    spoolDoc["extra"]["nfc_id"] = "\"" + uidString + "\"";
 
     String spoolPayload;
     serializeJson(spoolDoc, spoolPayload);
@@ -1055,7 +838,7 @@ uint16_t createSpool(uint16_t vendorId, uint16_t filamentId, JsonDocument& paylo
     return createdSpoolId;
 }
 
-bool createBrandFilament(JsonDocument& payload, String uidString) {
+bool createBrandFilament(JsonDocument& payload) {
     uint16_t vendorId = checkVendor(payload);
     if (vendorId == 0) {
         Serial.println("ERROR: Failed to create/find vendor");
@@ -1068,7 +851,7 @@ bool createBrandFilament(JsonDocument& payload, String uidString) {
         return false;
     }
     
-    uint16_t spoolId = createSpool(vendorId, filamentId, payload, uidString);
+    uint16_t spoolId = createSpool(vendorId, filamentId, payload);
     if (spoolId == 0) {
         Serial.println("ERROR: Failed to create spool");
         return false;
@@ -1080,7 +863,7 @@ bool createBrandFilament(JsonDocument& payload, String uidString) {
 
 // Map OpenPrintTag data to the FilaMan JSON format expected by createBrandFilament
 // This enables automatic spool creation in Spoolman from OpenPrintTag NFC tags
-bool createSpoolFromOpenPrintTag(const OpenPrintTagData& optData, String uidString) {
+bool createSpoolFromOpenPrintTag(const OpenPrintTagData& optData) {
     Serial.println("=== Creating Spoolman spool from OpenPrintTag data ===");
 
     if (!spoolmanConnected) {
@@ -1169,170 +952,13 @@ bool createSpoolFromOpenPrintTag(const OpenPrintTagData& optData, String uidStri
     Serial.println(debugPayload);
 
     // Use existing createBrandFilament flow
-    bool result = createBrandFilament(payload, uidString);
+    bool result = createBrandFilament(payload);
     payload.clear();
 
     return result;
 }
 
 // #### Spoolman init
-bool checkSpoolmanExtraFields() {
-    // Only check extra fields if they have not been checked before
-    if(!spoolmanExtraFieldsChecked){
-        HTTPClient http;
-        String checkUrls[] = {
-            spoolmanUrl + apiUrl + "/field/spool",
-            spoolmanUrl + apiUrl + "/field/filament"
-        };
-
-        String spoolExtra[] = {
-            "nfc_id"
-        };
-
-        String filamentExtra[] = {
-            "nozzle_temperature",
-            "price_meter",
-            "price_gramm",
-            "bambu_setting_id",
-            "bambu_cali_id",
-            "bambu_idx",
-            "bambu_k",
-            "bambu_flow_ratio",
-            "bambu_max_volspeed"
-        };
-
-        String spoolExtraFields[] = {
-            "{\"name\": \"NFC ID\","
-            "\"key\": \"nfc_id\","
-            "\"field_type\": \"text\"}"
-        };
-
-        String filamentExtraFields[] = {
-            "{\"name\": \"Nozzle Temp\","
-            "\"unit\": \"°C\","
-            "\"field_type\": \"integer_range\","
-            "\"default_value\": \"[190,230]\","
-            "\"key\": \"nozzle_temperature\"}",
-
-            "{\"name\": \"Price/m\","
-            "\"unit\": \"€\","
-            "\"field_type\": \"float\","
-            "\"key\": \"price_meter\"}",
-            
-            "{\"name\": \"Price/g\","
-            "\"unit\": \"€\","
-            "\"field_type\": \"float\","
-            "\"key\": \"price_gramm\"}",
-
-            "{\"name\": \"Bambu Setting ID\","
-            "\"field_type\": \"text\","
-            "\"key\": \"bambu_setting_id\"}",
-
-            "{\"name\": \"Bambu Cali ID\","
-            "\"field_type\": \"text\","
-            "\"key\": \"bambu_cali_id\"}",
-
-            "{\"name\": \"Bambu Filament IDX\","
-            "\"field_type\": \"text\","
-            "\"key\": \"bambu_idx\"}",
-
-            "{\"name\": \"Bambu k\","
-            "\"field_type\": \"float\","
-            "\"key\": \"bambu_k\"}",
-
-            "{\"name\": \"Bambu Flow Ratio\","
-            "\"field_type\": \"float\","
-            "\"key\": \"bambu_flow_ratio\"}",
-
-            "{\"name\": \"Bambu Max Vol. Speed\","
-            "\"unit\": \"mm3/s\","
-            "\"field_type\": \"integer\","
-            "\"default_value\": \"12\","
-            "\"key\": \"bambu_max_volspeed\"}"
-        };
-
-        Serial.println("Checking extra fields...");
-
-        int urlLength = sizeof(checkUrls) / sizeof(checkUrls[0]);
-
-        for (uint8_t i = 0; i < urlLength; i++) {
-            Serial.println();
-            Serial.println("-------- Checking fields for "+checkUrls[i]+" --------");
-            http.begin(checkUrls[i]);
-            int httpCode = http.GET();
-        
-            if (httpCode == HTTP_CODE_OK) {
-                String payload = http.getString();
-                JsonDocument doc;
-                DeserializationError error = deserializeJson(doc, payload);
-                if (!error) {
-                    String* extraFields;
-                    String* extraFieldData;
-                    u16_t extraLength;
-
-                    if (i == 0) {
-                        extraFields = spoolExtra;
-                        extraFieldData = spoolExtraFields;
-                        extraLength = sizeof(spoolExtra) / sizeof(spoolExtra[0]);
-                    } else {
-                        extraFields = filamentExtra;
-                        extraFieldData = filamentExtraFields;
-                        extraLength = sizeof(filamentExtra) / sizeof(filamentExtra[0]);
-                    }
-
-                    for (uint8_t s = 0; s < extraLength; s++) {
-                        bool found = false;
-                        for (JsonObject field : doc.as<JsonArray>()) {
-                            if (field["key"].is<String>() && field["key"] == extraFields[s]) {
-                                Serial.println("Field found: " + extraFields[s]);
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            Serial.println("Field not found: " + extraFields[s]);
-
-                            // Add extra field
-                            http.begin(checkUrls[i] + "/" + extraFields[s]);
-                            http.addHeader("Content-Type", "application/json");
-                            int httpCode = http.POST(extraFieldData[s]);
-
-                            if (httpCode > 0) {
-                                // Get response code and message
-                                String response = http.getString();
-                                //Serial.println("HTTP code: " + String(httpCode));
-                                //Serial.println("Response: " + response);
-                                if (httpCode != HTTP_CODE_OK) {
-
-                                    return false;
-                                }
-                            } else {
-                                // Error sending request
-                                Serial.println("Error sending request: " + String(http.errorToString(httpCode)));
-                                return false;
-                            }
-                            //http.end();
-                        }
-                        yield();
-                        vTaskDelay(100 / portTICK_PERIOD_MS);
-                    }
-                }
-                doc.clear();
-            }
-        }
-        
-        Serial.println("-------- END checking fields --------");
-        Serial.println();
-
-        http.end();
-
-        spoolmanExtraFieldsChecked = true;
-        return true;
-    }else{
-        return true;
-    }
-}
-
 bool checkSpoolmanInstance() {
     HTTPClient http;
     bool returnValue = false;
@@ -1356,16 +982,6 @@ bool checkSpoolmanInstance() {
                 if (!error && doc["status"].is<String>()) {
                     const char* status = doc["status"];
                     http.end();
-
-                    if (!checkSpoolmanExtraFields()) {
-                        Serial.println("Error checking extra fields.");
-
-                        // TBD
-                        oledShowMessage("Spoolman Error creating Extrafields");
-                        vTaskDelay(2000 / portTICK_PERIOD_MS);
-                        
-                        return false;
-                    }
 
                     spoolmanApiState = API_IDLE;
                     oledShowTopRow();
@@ -1405,8 +1021,6 @@ bool saveSpoolmanUrl(const String& url, bool octoOn, const String& octo_url, con
     preferences.putString(NVS_KEY_OCTOPRINT_TOKEN, octoTk);
     preferences.end();
 
-    //TBD: This could be handled nicer in the future
-    spoolmanExtraFieldsChecked = false;
     spoolmanUrl = url;
     octoEnabled = octoOn;
     octoUrl = octo_url;

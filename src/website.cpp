@@ -129,15 +129,6 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 #endif
         }
 
-        else if (doc["type"] == "setSpoolmanSettings") {
-            Serial.println(doc["payload"].as<String>());
-            if (updateSpoolBambuData(doc["payload"].as<String>())) {
-                ws.textAll("{\"type\":\"setSpoolmanSettings\",\"payload\":\"success\"}");
-            } else {
-                ws.textAll("{\"type\":\"setSpoolmanSettings\",\"payload\":\"error\"}");
-            }
-        }
-
         else if (doc["type"] == "saveMoonrakerSettings") {
             String url = doc["payload"]["url"].as<String>();
             String apiKey = doc["payload"]["apiKey"].as<String>();
@@ -434,15 +425,6 @@ void setupWebserver(AsyncWebServer &server) {
         response->addHeader("Cache-Control", CACHE_CONTROL);
         request->send(response);
         Serial.println("spool_in.png sent");
-    });
-
-    // Route for set_spoolman.png
-    server.on("/set_spoolman.png", HTTP_GET, [](AsyncWebServerRequest *request){
-        AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/set_spoolman.png.gz", "image/png");
-        response->addHeader("Content-Encoding", "gzip");
-        response->addHeader("Cache-Control", CACHE_CONTROL);
-        request->send(response);
-        Serial.println("set_spoolman.png sent");
     });
 
     // Route for JavaScript files
