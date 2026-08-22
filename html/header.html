@@ -24,14 +24,6 @@
                     const scaleLink = document.querySelector('nav a[href="/waage"]');
                     if (scaleLink) scaleLink.style.display = 'none';
                 }
-                if (!data.bambu) {
-                    const bambuDot = document.getElementById('bambuDot');
-                    if (bambuDot && bambuDot.parentElement) bambuDot.parentElement.style.display = 'none';
-                    const bambuSettingsCard = document.getElementById('bambuSettingsCard');
-                    if (bambuSettingsCard) bambuSettingsCard.style.display = 'none';
-                    const settingsHeading = document.getElementById('settingsHeading');
-                    if (settingsHeading) settingsHeading.textContent = 'Spoolman API URL';
-                }
             })
             .catch(error => console.error('Error fetching capabilities:', error));
     </script>
@@ -54,9 +46,6 @@
             <a href="/upgrade">Upgrade</a>
         </nav>
         <div class="status-container">
-            <div class="status-item">
-                <span class="status-dot" id="bambuDot"></span>B
-            </div>
             <div class="status-item">
                 <span class="status-dot" id="spoolmanDot"></span>S
             </div>

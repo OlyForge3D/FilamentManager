@@ -9,18 +9,17 @@
 5. [Configuration](#configuration)
 6. [Usage](#usage)
 7. [NFC Tags](#nfc-tags)
-8. [Bambu Lab Integration](#bambu-lab-integration)
-9. [Spoolman Integration](#spoolman-integration)
-10. [Octoprint Integration](#octoprint-integration)
-11. [Manufacturer Tags](#manufacturer-tags)
-12. [Troubleshooting](#troubleshooting)
-13. [Support](#support)
+8. [Spoolman Integration](#spoolman-integration)
+9. [Octoprint Integration](#octoprint-integration)
+10. [Manufacturer Tags](#manufacturer-tags)
+11. [Troubleshooting](#troubleshooting)
+12. [Support](#support)
 
 ---
 
 ## Overview
 
-FilaMan is a comprehensive filament management system for 3D printers based on ESP32 hardware. It provides weight measurement, NFC tag management, and seamless integration with Spoolman and Bambu Lab 3D printers.
+FilaMan is a comprehensive filament management system for 3D printers based on ESP32 hardware. It provides weight measurement, NFC tag management, and seamless integration with Spoolman.
 
 ### Key Features
 
@@ -30,7 +29,6 @@ FilaMan is a comprehensive filament management system for 3D printers based on E
 - **WiFi connectivity** with easy configuration
 - **Web-based user interface** with real-time updates
 - **Spoolman integration** for inventory management
-- **Bambu Lab AMS control** via MQTT
 - **OpenSpool NFC format** compatibility
 - **Manufacturer tag support** for automatic setup
 
@@ -167,30 +165,13 @@ This is required as Spoolman doesn't support CORS domain configuration yet.
 ### Spoolman Connection
 
 1. **Enter Spoolman URL**
-   - Go to "Spoolman/Bambu" page
+   - Go to "Spoolman" page
    - Enter complete URL of your Spoolman instance
    - Format: `http://spoolman-server:7912`
 
 2. **Test Connection**
    - System automatically checks connection
    - Successful connection shown by green status
-
-### Bambu Lab Printer (Optional)
-
-1. **Printer Settings**
-   - Open settings menu on your Bambu printer
-   - Note the following data:
-     - Printer IP address
-     - Access Code
-     - Serial Number
-
-2. **FilaMan Configuration**
-   - Enter printer data on "Spoolman/Bambu" page
-   - Enable "Auto Send to Bambu" for automatic AMS assignment
-
-3. **Auto-Send Timeout**
-   - Configure waiting time for automatic spool detection
-   - Recommended value: 10-30 seconds
 
 ---
 
@@ -215,7 +196,7 @@ This is required as Spoolman doesn't support CORS domain configuration yet.
 
 - **Home**: Main functions and current status
 - **Scale**: Scale calibration and settings
-- **Spoolman/Bambu**: System configuration
+- **Spoolman**: System configuration
 - **Statistics**: Usage statistics (if enabled)
 
 ---
@@ -257,42 +238,6 @@ This is required as Spoolman doesn't support CORS domain configuration yet.
 2. **Automatic Updates**
    - Current weight transferred to Spoolman
    - Spool automatically selected in web interface
-
----
-
-## Bambu Lab Integration
-
-### AMS (Automatic Material System)
-
-1. **Display AMS Status**
-   - Web interface shows current state of all AMS slots
-   - Loaded slots display filament information
-
-2. **Manual Filament Assignment**
-   - Select spool from Spoolman list
-   - Click corresponding AMS slot icon
-   - Filament assigned to slot
-
-3. **Automatic Assignment**
-   - After weighing with "Auto Send to Bambu" enabled
-   - System waits for new spools in AMS
-   - Calibrated filaments automatically assigned
-
-### Bambu Studio Integration
-
-1. **Sync Filament Profiles**
-   - Calibrate filaments in Bambu Studio
-   - Use Device → AMS → Pencil icon → Select
-
-2. **Save Setting IDs**
-   - FilaMan automatically detects available setting IDs
-   - Click "Save Settings to Spoolman"
-   - Profiles used for future prints
-
-### Restore Connection
-
-- For connection issues, click red dot in menu bar
-- System automatically establishes new connection
 
 ---
 
@@ -425,18 +370,6 @@ For full schema details and examples, see [manufacturer_tags.md](manufacturer_ta
 
 - Solution: Ensure Spoolman is running
 - Tip: Check network firewall settings
-
-#### Bambu Lab
-
-**Issue**: Printer won't connect
-
-- Solution: Check access code and IP address
-- Tip: Ensure printer is in LAN mode
-
-**Issue**: AMS status not displayed
-
-- Solution: Check MQTT connection
-- Note: Bambu may close API at any time
 
 ### Debug Information
 
@@ -584,7 +517,6 @@ Bitmap icons for various states:
 
 // Connection Icons with strikethrough indicator
 - wifi_on/wifi_off: WLAN status
-- bambu_on: Bambu Lab connection
 - spoolman_on: Spoolman API status
 ```
 
@@ -632,45 +564,6 @@ if (activeSpoolId != "" &&
 }
 ```
 
-### Bambu Lab MQTT
-
-#### Connection Parameters
-
-```cpp
-// SSL/TLS Configuration
-#define BAMBU_PORT 8883
-#define BAMBU_USERNAME "bblp"
-
-// Topic Structure
-String topic = "device/" + bambu_serial + "/report";
-String request_topic = "device/" + bambu_serial + "/request";
-```
-
-#### AMS Data Structure
-
-```cpp
-struct AMSData {
-    String tray_id;
-    String tray_type;
-    String tray_color;
-    String tray_material;
-    String setting_id;
-    String tray_info_idx;
-    bool has_spool;
-};
-```
-
-#### Auto-Send Mechanism
-
-```cpp
-// After tag recognition
-if (bambuCredentials.autosend_enable) {
-    autoSetToBambuSpoolId = activeSpoolId.toInt();
-    // Countdown starts automatically
-    // Waits for new spool in AMS
-}
-```
-
 ### WebSocket Communication
 
 #### Message Types
@@ -693,13 +586,7 @@ if (bambuCredentials.autosend_enable) {
 {
   "type": "heartbeat",
   "freeHeap": 245,
-  "bambu_connected": true,
   "spoolman_connected": true
-}
-
-{
-  "type": "amsData",
-  "data": [ /* AMS array */ ]
 }
 ```
 
@@ -722,7 +609,6 @@ esp_task_wdt_add(NULL);       // Add current task
 #### Error Recovery
 
 - **NFC Reset**: Automatic PN532 restart on communication errors
-- **MQTT Reconnect**: Bambu Lab connection automatically restored
 - **WiFi Monitoring**: Connection check every 60 seconds
 
 ---

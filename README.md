@@ -1,7 +1,7 @@
 # FilamentManager
 
 > **An ESP32 NFC filament management system for 3D printing.**
-> Read and write NFC spool tags, track filament usage, and integrate with Spoolman, Moonraker/Klipper, Bambu Lab AMS, and [PrintFarmer](https://github.com/jpapiez/PrintFarmer).
+> Read and write NFC spool tags, track filament usage, and integrate with Spoolman, Moonraker/Klipper, OctoPrint, and [PrintFarmer](https://github.com/jpapiez/PrintFarmer).
 
 ## Attribution
 
@@ -25,8 +25,8 @@ FilamentManager is derived from [FilaMan](https://github.com/ManuelW77/Filaman) 
 
 ### Printer Backend Integrations
 
-- **Bambu Lab AMS** — MQTT-based AMS slot assignment and monitoring
 - **Moonraker/Klipper** — sets active spool via `POST /server/spoolman/spool_id` on scan; Moonraker's Spoolman proxy can replace direct Spoolman access
+- **OctoPrint** — sets active spool via the Spoolman OctoPrint plugin
 - **PrintFarmer** — reports spool scans and device health to a PrintFarmer server for centralized farm management
 
 ### PrintFarmer Integration
@@ -108,7 +108,6 @@ For optional hardware pin configurations (scale, display, touch sensor), see [Op
 - `WiFiManager`: Network configuration
 - `ESPAsyncWebServer`: Web server functionality
 - `ArduinoJson`: JSON parsing and creation
-- `PubSubClient`: MQTT communication
 - `Adafruit_PN532`: NFC functionality
 
 ### Installation
@@ -172,7 +171,7 @@ You have to activate Spoolman in debug mode, because you are not able to set COR
 ### Relevant Links
 - [PlatformIO Documentation](https://docs.platformio.org/)
 - [Spoolman Documentation](https://github.com/Donkie/Spoolman)
-- [Bambu Lab Printer Documentation](https://www.bambulab.com/)
+- [Moonraker Documentation](https://moonraker.readthedocs.io/)
 
 ### Tutorials and Examples
 - [PlatformIO Getting Started](https://docs.platformio.org/en/latest/tutorials/espressif32/arduino_debugging_unit_testing.html)
