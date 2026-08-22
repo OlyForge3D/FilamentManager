@@ -305,11 +305,10 @@ This is required as Spoolman doesn't support CORS domain configuration yet.
    - Real-time updates of spool data
 
 2. **Extra Fields**
-   - FilaMan automatically creates required custom fields
-   - NFC tag UID stored as reference
+   - FilaMan does not create or manage Spoolman extra fields
+   - Spool identity is stored on the NFC tag itself
 
 3. **Filtering**
-   - "Show only spools without NFC tag" for easy tag assignment
    - Categorization by manufacturers and material types
 
 ### Spoolman Octoprint Plugin

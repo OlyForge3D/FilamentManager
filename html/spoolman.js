@@ -9,8 +9,7 @@ function processSpoolData(data) {
         id: spool.id,
         remaining_weight: spool.remaining_weight,
         remaining_length: spool.remaining_length,
-        filament: spool.filament,
-        extra: spool.extra
+        filament: spool.filament
     }));
 }
 
@@ -21,21 +20,13 @@ function populateVendorDropdown(data, selectedSmId = null) {
         console.error('vendorSelect element not found');
         return;
     }
-    const onlyWithoutSmId = document.getElementById("onlyWithoutSmId");
-    if (!onlyWithoutSmId) {
-        console.error('onlyWithoutSmId element not found');
-        return;
-    }
 
-    // Separate objects for all vendors and filtered vendors
     const allVendors = {};
-    const filteredVendors = {};
 
     vendorSelect.innerHTML = '<option value="">Please select...</option>';
 
     let vendorIdToSelect = null;
     let totalSpools = 0;
-    let spoolsWithoutTag = 0;
     let totalWeight = 0;
     let totalLength = 0;
     // New object for material grouping
@@ -63,26 +54,10 @@ function populateVendorDropdown(data, selectedSmId = null) {
         }
 
         const vendor = spool.filament.vendor;
-        
-        const hasValidNfcId = spool.extra && 
-                             spool.extra.nfc_id && 
-                             spool.extra.nfc_id !== '""' && 
-                             spool.extra.nfc_id !== '"\\"\\"\\""';
-        
-        if (!hasValidNfcId) {
-            spoolsWithoutTag++;
-        }
 
         // Collect all vendors
         if (!allVendors[vendor.id]) {
             allVendors[vendor.id] = vendor.name;
-        }
-
-        // Filtered vendors for dropdown
-        if (!filteredVendors[vendor.id]) {
-            if (!onlyWithoutSmId.checked || !hasValidNfcId) {
-                filteredVendors[vendor.id] = vendor.name;
-            }
         }
     });
 
@@ -98,8 +73,8 @@ function populateVendorDropdown(data, selectedSmId = null) {
         ? (weightInKg / 1000).toFixed(2) + " t" 
         : weightInKg.toFixed(2) + " kg";
 
-    // Fill dropdown with filtered vendors - alphabetically sorted
-    Object.entries(filteredVendors)
+    // Fill dropdown with vendors - alphabetically sorted
+    Object.entries(allVendors)
         .sort(([, nameA], [, nameB]) => nameA.localeCompare(nameB)) // Sort vendors alphabetically by name
         .forEach(([id, name]) => {
             const option = document.createElement("option");
@@ -109,7 +84,6 @@ function populateVendorDropdown(data, selectedSmId = null) {
         });
 
     document.getElementById("totalSpools").textContent = totalSpools;
-    document.getElementById("spoolsWithoutTag").textContent = spoolsWithoutTag;
     // Show total number of all vendors
     document.getElementById("totalVendors").textContent = Object.keys(allVendors).length;
     
@@ -158,7 +132,6 @@ function updateFilamentDropdown(selectedSmId = null) {
     const vendorId = document.getElementById("vendorSelect").value;
     const dropdownContentInner = document.getElementById("filament-dropdown-content");
     const filamentSection = document.getElementById("filamentSection");
-    const onlyWithoutSmId = document.getElementById("onlyWithoutSmId").checked;
     const selectedText = document.getElementById("selected-filament");
     const selectedColor = document.getElementById("selected-color");
 
@@ -175,21 +148,13 @@ function updateFilamentDropdown(selectedSmId = null) {
                 return false;
             }
 
-            const hasValidNfcId = spool.extra && 
-                                 spool.extra.nfc_id && 
-                                 spool.extra.nfc_id !== '""' && 
-                                 spool.extra.nfc_id !== '"\\"\\"\\""';
-            
-            return spool.filament.vendor.id == vendorId && 
-                   (!onlyWithoutSmId || !hasValidNfcId);
+            return spool.filament.vendor.id == vendorId;
         });
 
         filteredFilaments.forEach(spool => {
             const option = document.createElement("div");
             option.className = "dropdown-option";
             option.setAttribute("data-value", spool.filament.id);
-            option.setAttribute("data-nfc-id", spool.extra.nfc_id || "");
-            
 
             // Generate color representation based on filament type (single or multi color)
             let colorHTML = '';
@@ -359,14 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const locationSelect = document.getElementById('locationSelect');
     if (locationSelect) {
         locationSelect.addEventListener('change', () => updateLocationSelect());
-    }
-    
-    const onlyWithoutSmId = document.getElementById('onlyWithoutSmId');
-    if (onlyWithoutSmId) {
-        onlyWithoutSmId.addEventListener('change', () => {
-            populateVendorDropdown(spoolsData);
-            updateFilamentDropdown();
-        });
     }
     
     document.addEventListener('spoolDataLoaded', (event) => {

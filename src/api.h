@@ -15,8 +15,6 @@ typedef enum {
 
 typedef enum {
     API_REQUEST_OCTO_SPOOL_UPDATE,
-    API_REQUEST_BAMBU_UPDATE,
-    API_REQUEST_SPOOL_TAG_ID_UPDATE,
     API_REQUEST_SPOOL_WEIGHT_UPDATE,
     API_REQUEST_SPOOL_LOCATION_UPDATE,
     API_REQUEST_VENDOR_CREATE,
@@ -39,16 +37,13 @@ extern uint16_t updateOctoSpoolId;
 bool checkSpoolmanInstance();
 bool saveSpoolmanUrl(const String& url, bool octoOn, const String& octoWh, const String& octoTk);
 String loadSpoolmanUrl(); // Function to load the URL
-bool checkSpoolmanExtraFields(); // Function for checking extra fields
 JsonDocument fetchSingleSpoolInfo(int spoolId); // API function for the web page
-bool updateSpoolTagId(String uidString, const char* payload); // Function to update a spool
 uint8_t updateSpoolWeight(String spoolId, uint16_t weight); // Function to update weight
 uint8_t updateSpoolLocation(String spoolId, String location);
 bool initSpoolman(); // Function to initialize Spoolman
-bool updateSpoolBambuData(String payload); // Function to update Bambu data
 bool updateSpoolOcto(int spoolId); // Function to update Octo data
-bool createBrandFilament(JsonDocument& payload, String uidString);
-bool createSpoolFromOpenPrintTag(const OpenPrintTagData& optData, String uidString);
+bool createBrandFilament(JsonDocument& payload);
+bool createSpoolFromOpenPrintTag(const OpenPrintTagData& optData);
 
 // Moonraker/Klipper integration
 extern bool moonrakerEnabled;

@@ -294,16 +294,21 @@ bool setBambuSpool(String payload) {
     String type = doc["type"].as<String>();
     (type == "PLA+") ? type = "PLA" : type;
     String brand = doc["brand"].as<String>();
-    String tray_info_idx = (doc["tray_info_idx"].as<String>() != "-1") ? doc["tray_info_idx"].as<String>() : "";
-    if (tray_info_idx == "") {
-        if (brand != "" && type != "") {
-            FilamentResult result = findFilamentIdx(brand, type);
-            tray_info_idx = result.key;
-            type = result.type;  // Update type with found base type
-        }
+
+    // The Bambu filament index is derived from the local bambu_filaments.json lookup.
+    String tray_info_idx = "";
+    if (brand != "" && type != "") {
+        FilamentResult result = findFilamentIdx(brand, type);
+        tray_info_idx = result.key;
+        type = result.type;  // Update type with found base type
     }
-    String setting_id = doc["bambu_setting_id"].as<String>();
-    String cali_idx = doc["cali_idx"].as<String>();
+
+    // Nozzle temperatures are no longer read from Spoolman. Keep the AMS command
+    // well formed when a filament is actually being set (0/0 only clears a tray).
+    if (type != "" && (minTemp <= 0 || maxTemp <= 0)) {
+        minTemp = 175;
+        maxTemp = 275;
+    }
 
     doc.clear();
 
@@ -315,9 +320,9 @@ bool setBambuSpool(String payload) {
     doc["print"]["nozzle_temp_min"] = minTemp;
     doc["print"]["nozzle_temp_max"] = maxTemp;
     doc["print"]["tray_type"] = type;
-    //doc["print"]["cali_idx"] = (cali_idx != "") ? cali_idx : "";
     doc["print"]["tray_info_idx"] = tray_info_idx;
-    doc["print"]["setting_id"] = setting_id;
+    // Required by the protocol, but FilaMan no longer tracks a filament preset id.
+    doc["print"]["setting_id"] = "";
     
     // Serialize the JSON
     String output;
@@ -334,33 +339,6 @@ bool setBambuSpool(String payload) {
     
     doc.clear();
     yield();
-
-    if (cali_idx != "") {
-        yield();
-        doc["print"]["sequence_id"] = "0";
-        doc["print"]["command"] = "extrusion_cali_sel";
-        doc["print"]["filament_id"] = tray_info_idx;
-        doc["print"]["nozzle_diameter"] = "0.4";
-        doc["print"]["cali_idx"] = cali_idx.toInt();
-        doc["print"]["tray_id"] = trayId < 200 ? trayId : 254;
-        //doc["print"]["ams_id"] = amsId < 200 ? amsId : 255;
-
-        // Serialize the JSON
-        String output;
-        serializeJson(doc, output);
-
-        if (sendMqttMessage(output)) {
-            Serial.println("Extrusion calibration successfully set");
-        }
-        else
-        {
-            Serial.println("Failed to set extrusion calibration");
-            return false;
-        }
-
-        doc.clear();
-        yield();
-    }
 
     return true;
 }

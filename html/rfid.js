@@ -155,13 +155,6 @@ function initWebSocket() {
                     ramStatus.textContent = `${data.freeHeap}k`;
                 }
             }
-            else if (data.type === 'setSpoolmanSettings') {
-                if (data.payload == 'success') {
-                    showNotification(`Spoolman Settings set successfully`, true);
-                } else {
-                    showNotification(`Error setting Spoolman Settings`, false);
-                }
-            }
         };
     } catch (error) {
         isConnected = false;
@@ -196,12 +189,6 @@ function updateConnectionStatus() {
 // Event Listeners
 document.addEventListener("DOMContentLoaded", function() {
     initWebSocket();
-    
-    // Event listener for checkbox
-    document.getElementById("onlyWithoutSmId").addEventListener("change", function() {
-        const spoolsData = window.getSpoolData();
-        window.populateVendorDropdown(spoolsData);
-    });
 });
 
 // Event listener for Spoolman events
@@ -283,14 +270,6 @@ function displayAmsData(amsData) {
                     <img src="spool_in.png" alt="Spool In" style="width: 48px; height: 48px; transform: rotate(180deg) scaleX(-1);">
                 </button>`;
 
-            const spoolmanButtonHtml = `
-                <button class="spool-button" onclick="handleSpoolmanSettings('${tray.tray_info_idx}', '${tray.setting_id}', '${tray.cali_idx}', '${tray.nozzle_temp_min}', '${tray.nozzle_temp_max}')" 
-                        style="position: absolute; bottom: 0px; right: 0px; 
-                               background: none; border: none; padding: 0; 
-                               cursor: pointer; display: none;">
-                    <img src="set_spoolman.png" alt="Spool In" style="width: 38px; height: 38px;">
-                </button>`;
-
             if (!hasAnyContent) {
                 return `
                     <div class="tray">
@@ -354,7 +333,6 @@ function displayAmsData(amsData) {
                         ${trayDetails}
                         ${tempHTML}
                         ${(ams.ams_id === 255 && tray.tray_type !== '') ? outButtonHtml : ''}
-                        ${(tray.setting_id != "" && tray.setting_id != "null") ? spoolmanButtonHtml : ''}
                     </div>
                     
                 </div>`;
@@ -378,36 +356,6 @@ function updateSpoolButtons(show) {
     spoolButtons.forEach(button => {
         button.style.display = show ? 'block' : 'none';
     });
-}
-
-function handleSpoolmanSettings(tray_info_idx, setting_id, cali_idx, nozzle_temp_min, nozzle_temp_max) {
-    // Get the selected filament
-    const selectedText = document.getElementById("selected-filament").textContent;
-
-    // Find the selected spool in the data
-    const selectedSpool = spoolsData.find(spool => 
-        `${spool.id} | ${spool.filament.name} (${spool.filament.material})` === selectedText
-    );
-
-    const payload = {
-        type: 'setSpoolmanSettings',
-        payload: {
-            filament_id: selectedSpool.filament.id,
-            tray_info_idx: tray_info_idx,
-            setting_id: setting_id,
-            cali_idx: cali_idx,
-            temp_min: nozzle_temp_min,
-            temp_max: nozzle_temp_max
-        }
-    };
-
-    try {
-        socket.send(JSON.stringify(payload));
-        showNotification(`Setting send to Spoolman`, true);
-    } catch (error) {
-        console.error("Error while sending settings to Spoolman:", error);
-        showNotification("Error while sending!", false);
-    }
 }
 
 function handleSpoolOut() {
@@ -460,15 +408,9 @@ function handleSpoolIn(amsId, trayId) {
         return;
     }
 
-    // Extract temperature values
-    let minTemp = "175";
-    let maxTemp = "275";
-
-    if (Array.isArray(selectedSpool.filament.nozzle_temperature) && 
-        selectedSpool.filament.nozzle_temperature.length >= 2) {
-        minTemp = selectedSpool.filament.nozzle_temperature[0];
-        maxTemp = selectedSpool.filament.nozzle_temperature[1];
-    }
+    // Nozzle temperature defaults; FilaMan no longer stores a per-filament range in Spoolman
+    const minTemp = "175";
+    const maxTemp = "275";
 
     // Create payload
     const payload = {
@@ -480,21 +422,9 @@ function handleSpoolIn(amsId, trayId) {
             nozzle_temp_min: parseInt(minTemp),
             nozzle_temp_max: parseInt(maxTemp),
             type: selectedSpool.filament.material,
-            brand: selectedSpool.filament.vendor.name,
-            tray_info_idx: selectedSpool.filament.extra.bambu_idx?.replace(/['"]+/g, '').trim() || '',
-            cali_idx: "-1"  // Set default value
+            brand: selectedSpool.filament.vendor.name
         }
     };
-
-    // Check if key cali_idx is present and set it
-    if (selectedSpool.filament.extra.bambu_cali_id) {
-        payload.payload.cali_idx = selectedSpool.filament.extra.bambu_cali_id.replace(/['"]+/g, '').trim();
-    }
-
-    // Check if key bambu_setting_id is present
-    if (selectedSpool.filament.extra.bambu_setting_id) {
-        payload.payload.bambu_setting_id = selectedSpool.filament.extra.bambu_setting_id.replace(/['"]+/g, '').trim();
-    }
 
     console.log("Spool-In Payload:", payload);
 
