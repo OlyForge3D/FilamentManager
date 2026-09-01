@@ -15,6 +15,9 @@
 ### Removed
 - `html/rfid_bambu.html` — the AMS variant of the main page. `/` now always serves `rfid.html`.
 
+### Fixed
+- Writing a spool tag now uses the filament's actual nozzle temperature range from Spoolman instead of always falling back to 175/275. The web UI read `filament.nozzle_temperature`, but Spoolman exposes it as the JSON-encoded extra field `filament.extra.nozzle_temperature` (e.g. the string `"[190,230]"`), so the range was never picked up and the wrong temperatures were written to every tag.
+
 ## [2.0.10] - 2025-10-15
 ### Fixed
 - fix typo

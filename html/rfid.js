@@ -355,6 +355,24 @@ function updateNfcData(data) {
     nfcStatusContainer.appendChild(nfcDataDiv);
 }
 
+// Spoolman stores extra field values JSON-encoded, so an integer_range field such as
+// nozzle_temperature arrives as the string "[190,230]" rather than as an array.
+function parseNozzleTemperature(value) {
+    if (value === undefined || value === null) return null;
+    let parsed = value;
+    if (typeof parsed === 'string') {
+        try {
+            parsed = JSON.parse(parsed);
+        } catch {
+            return null;
+        }
+    }
+    if (!Array.isArray(parsed) || parsed.length < 2) return null;
+    const [min, max] = parsed;
+    if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
+    return [min, max];
+}
+
 function writeNfcTag() {
     if(!spoolDetected || confirm("Are you sure you want to overwrite the Tag?") == true){
         const selectedText = document.getElementById("selected-filament").textContent;
@@ -376,11 +394,11 @@ function writeNfcTag() {
         // Extract temperature values correctly
         let minTemp = "175";
         let maxTemp = "275";
-        
-        if (Array.isArray(selectedSpool.filament.nozzle_temperature) && 
-            selectedSpool.filament.nozzle_temperature.length >= 2) {
-            minTemp = String(selectedSpool.filament.nozzle_temperature[0]);
-            maxTemp = String(selectedSpool.filament.nozzle_temperature[1]);
+
+        const nozzleTemp = parseNozzleTemperature(selectedSpool.filament.extra?.nozzle_temperature);
+        if (nozzleTemp) {
+            minTemp = String(nozzleTemp[0]);
+            maxTemp = String(nozzleTemp[1]);
         }
 
         // Create NFC data packet with correct data types
