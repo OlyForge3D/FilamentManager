@@ -17,6 +17,8 @@
 
 ### Fixed
 - Writing a spool tag now uses the filament's actual nozzle temperature range from Spoolman instead of always falling back to 175/275. The web UI read `filament.nozzle_temperature`, but Spoolman exposes it as the JSON-encoded extra field `filament.extra.nozzle_temperature` (e.g. the string `"[190,230]"`), so the range was never picked up and the wrong temperatures were written to every tag.
+- Resynced the committed `html/*.html` snapshots with `html/header.html`. The snapshots had drifted, and because `scripts/gzip_files.py` runs at script-import time while `scripts/combine_html.py` is deferred to a `buildfs` action, a clean one-shot `buildfs` packaged the stale copies — so the served pages were missing the **Hardware** nav link and the `/api/capabilities` check that hides the **Scale** link on builds without a scale. Both now appear on the first build rather than only after a second consecutive `buildfs`.
+- The nav link to the Spoolman page is now labelled "Spoolman" on the Spoolman page itself, matching every other page; it previously read "Settings" there.
 
 ## [2.0.10] - 2025-10-15
 ### Fixed
