@@ -15,6 +15,12 @@
 ### Removed
 - `html/rfid_bambu.html` — the AMS variant of the main page. `/` now always serves `rfid.html`.
 
+### Fixed
+- Writing a spool tag now uses the filament's actual nozzle temperature range from Spoolman instead of always falling back to 175/275. The web UI read `filament.nozzle_temperature`, but Spoolman exposes it as the JSON-encoded extra field `filament.extra.nozzle_temperature` (e.g. the string `"[190,230]"`), so the range was never picked up and the wrong temperatures were written to every tag.
+- Resynced the committed `html/*.html` snapshots with `html/header.html`. The snapshots had drifted, and because `scripts/gzip_files.py` runs at script-import time while `scripts/combine_html.py` is deferred to a `buildfs` action, a clean one-shot `buildfs` packaged the stale copies — so the served pages were missing the **Hardware** nav link and the `/api/capabilities` check that hides the **Scale** link on builds without a scale. Both now appear on the first build rather than only after a second consecutive `buildfs`.
+- The nav link to the Spoolman page is now labelled "Spoolman" on the Spoolman page itself, matching every other page; it previously read "Settings" there.
+- `scripts/combine_html.py` and `scripts/gzip_files.py` now both run as pre-actions on the filesystem image itself rather than on the `buildfs` alias and at script-import time respectively, so the header is combined into `html/*.html` *before* the pages are packed into `data/`. `buildfs` is an SCons alias whose action fires only after the image has already been built, so the combine step ran too late to affect what shipped and a clean one-shot `buildfs` packaged whatever was committed. This was the underlying cause of the stale-snapshot bug above: without it, any future drift between `html/header.html` and the page snapshots would silently ship stale pages again. As a side effect, firmware-only builds no longer rewrite `html/` or repopulate `data/`, since the image target only exists when the filesystem is actually being built.
+
 ## [2.0.10] - 2025-10-15
 ### Fixed
 - fix typo

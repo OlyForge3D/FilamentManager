@@ -2,7 +2,7 @@ Import("env")
 import os
 import re
 
-def combine_html_files(source, target, env):
+def combine_html_files(source=None, target=None, env=None):
     print("COMBINE HTML FILES")
     
     html_dir = "./html"
@@ -30,5 +30,11 @@ def combine_html_files(source, target, env):
                 f.write(new_content)
             print(f"Combined header with {filename}")
 
-# Register the script to run before building SPIFFS
-env.AddPreAction("buildfs", combine_html_files)
+# Hook the filesystem image itself, not the "buildfs" alias. An action on the
+# alias runs only after the image has already been built from data/, so the
+# combined HTML would not reach the image until the next build. Registering
+# here also means firmware-only builds never rewrite html/, because the image
+# target only exists when buildfs/uploadfs/uploadfsota is requested.
+# gzip_files.py hooks the same target and is loaded after this script, so it
+# runs second and picks up the combined output.
+env.AddPreAction("$BUILD_DIR/${ESP32_FS_IMAGE_NAME}.bin", combine_html_files)

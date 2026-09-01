@@ -1,3 +1,4 @@
+Import("env")
 import gzip
 import os
 import shutil
@@ -36,7 +37,7 @@ def main(source_dir, target_dir):
                 copy_file(input_file, output_file_original)
                 print(f'Copied {input_file} to {output_file_original}')
 
-def init():
+def init(source=None, target=None, env=None):
     source_dir = 'html'
     target_dir = 'data'
     
@@ -45,4 +46,9 @@ def init():
     
     main(source_dir, target_dir)
 
-init()
+# Populate data/ immediately before the filesystem image is built, so the image
+# always reflects the current html/ sources. This used to run at import time,
+# which is before combine_html.py had injected header.html, so a single clean
+# build packaged stale pages. Firmware-only builds no longer touch data/,
+# because the image target only exists when the filesystem is being built.
+env.AddPreAction("$BUILD_DIR/${ESP32_FS_IMAGE_NAME}.bin", init)
